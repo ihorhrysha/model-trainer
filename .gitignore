@@ -66,3 +66,6 @@ ENV/
 # Editors
 .idea/
 .vscode/
+
+# DB
+db.sqlite
