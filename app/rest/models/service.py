@@ -1,5 +1,5 @@
-from database.model import Model
-from database import db
+from app.database.model import Model
+from app.database import db
 
 
 def create_model(data):

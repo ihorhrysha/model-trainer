@@ -68,4 +68,4 @@ ENV/
 .vscode/
 
 # DB
-db.sqlite
+*.db
