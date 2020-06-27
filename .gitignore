@@ -69,3 +69,6 @@ ENV/
 
 # DB
 *.db
+
+test.py
+*.cred.json

@@ -11,9 +11,12 @@ RESTPLUS_VALIDATE = True
 RESTPLUS_MASK_SWAGGER = False
 RESTPLUS_ERROR_404_HELP = False
 
+GOOGLE_APPLICATION_CREDENTIALS = os.path.join(basedir, 'bigquery.cred.json')
+
 # SQLAlchemy settings
 # SQLALCHEMY_DATABASE_URI = 'sqlite:///db.sqlite'
-SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'flask_dev_main.db')
+SQLALCHEMY_DATABASE_URI = 'sqlite:///' + \
+    os.path.join(basedir, 'flask_dev_main.db')
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
