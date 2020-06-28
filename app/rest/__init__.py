@@ -8,6 +8,7 @@ from flask import current_app
 from sqlalchemy.orm.exc import NoResultFound
 
 from .models.controller import api as models_namespace
+from .tasks.controller import api as tasks_namespace
 
 log = logging.getLogger(__name__)
 
@@ -16,6 +17,7 @@ api = Api(version='1.0', title='Trainer API',
           description='Model Trainer')
 
 api.add_namespace(models_namespace)
+api.add_namespace(tasks_namespace)
 
 
 @api.errorhandler
