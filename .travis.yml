@@ -9,6 +9,7 @@ script:
   - flask utils test
 notifications:
   slack:
+    if: branch = master
     rooms:
       - ucu-datascience:4Y7tTkbcnVJLy7O8ClUFTt2K
     template:
