@@ -1,13 +1,13 @@
 from google.cloud import bigquery
 from google.oauth2 import service_account
-from app.config import GOOGLE_APPLICATION_CREDENTIALS
+from flask import current_app
 
 
 class DataSource():
     def __init__(self, key_path):
 
         credentials = service_account.Credentials.from_service_account_file(
-            (GOOGLE_APPLICATION_CREDENTIALS or key_path),
+            (current_app.config["GOOGLE_APPLICATION_CREDENTIALS"] or key_path),
             scopes=["https://www.googleapis.com/auth/cloud-platform"],
         )
 

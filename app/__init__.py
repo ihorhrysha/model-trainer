@@ -1,7 +1,7 @@
 from flask import Flask, Blueprint
 from flask_restplus import Api
 
-from .config import configure_app
+from .config import Config
 from app.rest import api
 from app.front import routes
 from .database import db
@@ -12,7 +12,7 @@ def create_app():
     app = Flask(__name__)
 
     # Config
-    configure_app(app)
+    app.config.from_object(Config)
 
     # Separate API module
     blueprint = Blueprint('api', __name__, url_prefix='/api')

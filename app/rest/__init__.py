@@ -4,7 +4,7 @@ import traceback
 
 from flask_restplus import Api
 
-import app.config
+from flask import current_app
 from sqlalchemy.orm.exc import NoResultFound
 
 from .models.controller import api as models_namespace
@@ -23,7 +23,7 @@ def default_error_handler(e):
     message = 'An unhandled exception occurred.'
     log.exception(message)
 
-    if not config.FLASK_DEBUG:
+    if not current_app.config('FLASK_DEBUG'):
         return {'message': message}, 500
 
 
