@@ -1,0 +1,7 @@
+language: python
+install:
+  - make install
+  - python manage.py db upgrade
+# command to run tests
+script:
+  - make tests
