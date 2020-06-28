@@ -1,32 +1,27 @@
-
-from app import create_app
-
-# TODO refactor imports
-from app.database import db
-import app.database.model
-import app.database.task
-
 import os
 import unittest
 
-from flask_migrate import Migrate, MigrateCommand
-from flask_script import Manager
+from app import create_app
+
+from app.database import db, model, task
+
+from flask_migrate import Migrate
+# from flask_script import Manager
 
 app = create_app()
 app.app_context().push()
 
-manager = Manager(app)
+# manager = Manager(app)
 migrate = Migrate(app, db)
 
-manager.add_command('db', MigrateCommand)
+
+@app.cli.group()
+def utils():
+    """Custom utils commands."""
+    pass
 
 
-@manager.command
-def run():
-    app.run(host='0.0.0.0', port=5000, debug=True)
-
-
-@manager.command
+@utils.command()
 def test():
     """Runs the unit tests."""
     tests = unittest.TestLoader().discover('app/test', pattern='test*.py')
@@ -37,4 +32,4 @@ def test():
 
 
 if __name__ == '__main__':
-    manager.run()
+    app.run()

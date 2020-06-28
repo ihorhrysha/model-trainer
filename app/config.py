@@ -12,8 +12,6 @@ class Config(object):
     RESTPLUS_VALIDATE = True
     RESTPLUS_MASK_SWAGGER = False
     RESTPLUS_ERROR_404_HELP = False
-
-    FLASK_DEBUG = True  # Do not use debug mode in production
-
+    ENV = 'development'
     GOOGLE_APPLICATION_CREDENTIALS = os.environ.get('GBQ_CRED_PATH') or \
         os.path.join(basedir, 'bigquery.cred.json')

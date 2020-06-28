@@ -8,9 +8,9 @@ install:
 	pip install -r requirements.txt
 
 tests:
-	python manage.py test
+	flask utils test
 
 run:
-	python manage.py run
+	flask run
 
 all: clean install tests run
