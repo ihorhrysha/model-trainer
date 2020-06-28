@@ -8,4 +8,4 @@ install:
 script:
   - flask utils test
 notifications:
-  slack: ucu-datascience:$SLACK_TOKEN
+  slack: ucu-datascience::4Y7tTkbcnVJLy7O8ClUFTt2K
