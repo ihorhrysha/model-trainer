@@ -2,7 +2,7 @@ from flask import request
 from flask_restplus import Resource, Namespace
 
 from app.trainer.data_source_service import DataSource
-# from app.trainer.data_preprocessor import DataPreprocessor
+from app.trainer.data_preprocessor import DataPreprocessor
 
 
 api = Namespace('tasks', description='Operations related to models mgmt')
@@ -20,8 +20,8 @@ class TrainModel(Resource):
 
         df = gbq_ds.main_query()
 
-        # pd = DataPreprocessor(df)
+        pd = DataPreprocessor()
 
-        # pd.preprocess()
+        df = pd.preprocess(df)
 
         return "am trining" + str(df.shape)

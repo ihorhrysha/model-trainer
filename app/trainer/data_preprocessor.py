@@ -1,14 +1,15 @@
-import pandas
+import pandas as pd
 from datetime import date, timedelta
 import calendar
 import random
 from countryinfo import CountryInfo
 import pycountry
+import numpy as np
 
 
 class DataPreprocessor:
-    def __init__(self, df):
-        self.df = df
+    # def __init__(self, df):
+    #     self.df = df
 
     def preprocess(self, df):
         # Feature construction
@@ -205,26 +206,26 @@ class DataPreprocessor:
         df["OrderMonth"] = df.OrderDate.dt.month
         return df
 
-        def _order_price_feature(self, df1):
-            """ Create TotalOrderPrice feature (total BasePrice of items in order)
-            """
-            df = df1.copy()
-            # df = df[['OrderId', 'BasePrice', 'OrderQty']].copy()
-            df['TotalOrderProductPrice'] = df['BasePrice'] * df['OrderQty']
+    def _order_price_feature(self, df1):
+        """ Create TotalOrderPrice feature (total BasePrice of items in order)
+        """
+        df = df1.copy()
+        # df = df[['OrderId', 'BasePrice', 'OrderQty']].copy()
+        df['TotalOrderProductPrice'] = df['BasePrice'] * df['OrderQty']
 
-            right_df = df[['OrderId', 'TotalOrderProductPrice']].\
-                groupby('OrderId').\
-                sum().\
-                reset_index().\
-                rename(columns={'TotalOrderProductPrice': 'TotalOrderPrice'})
+        right_df = df[['OrderId', 'TotalOrderProductPrice']].\
+            groupby('OrderId').\
+            sum().\
+            reset_index().\
+            rename(columns={'TotalOrderProductPrice': 'TotalOrderPrice'})
 
-            if 'TotalOrderPrice' in df.columns:
-                df = df.drop(columns='TotalOrderPrice')
-            return df.merge(
-                right_df,
-                how='left',
-                on='OrderId'
-            )
+        if 'TotalOrderPrice' in df.columns:
+            df = df.drop(columns='TotalOrderPrice')
+        return df.merge(
+            right_df,
+            how='left',
+            on='OrderId'
+        )
 
     def _order_revenue_feature(self, df1):
         """ Create TotalOrderRevenue feature (total OrderPrice of items in order)
@@ -284,7 +285,7 @@ class DataPreprocessor:
         # Duplicate/trial from business perspective are not valid values(test, errors, and some other garbage)
         df_filtered = data[data['Status'] != 'Duplicate/trial']
 
-        df_filtered = delete_rare_cat(
+        df_filtered = self._delete_rare_cat(
             df_filtered, 'Status', 'occurrence', min_occur=0.005, fill_value='Cancelled')
 
         df_filtered.loc[df_filtered.Status.isna(), 'Status'] = 'Cancelled'
@@ -295,7 +296,7 @@ class DataPreprocessor:
 
         # change rare categories to 'Сегмент не определен' within non nans
         df_filtered = data[~data.Segment.isnull()]
-        df_filtered = delete_rare_cat(
+        df_filtered = self._delete_rare_cat(
             df_filtered, 'Segment', 'occurrence', min_occur=0.005, fill_value='Сегмент не определен')
 
         # Сегмент не определен == NaN
@@ -306,11 +307,11 @@ class DataPreprocessor:
 
     def _nan_cleaner(self, df, threshold=0.7):
 
-        # Dropping columns with missing value rate higher than threshold
-        df = df[df.columns[df.isnull().mean() < threshold]]
-
         # Not sure if needed but can make TransactionDate equal OrderData
         df['TransactionDate'].fillna(df['OrderDate'], inplace=True)
+
+        # Dropping columns with missing value rate higher than threshold
+        df = df[df.columns[df.isnull().mean() < threshold]]
 
         # Max fill function for categorical columns
         cats_with_nan = ['BrandId', 'Brand', 'PriceTypeId',
@@ -324,3 +325,71 @@ class DataPreprocessor:
         df = df.fillna(0)
 
         return df
+
+    def _delete_rare_cat(self, price_data, cat_col, by="number", min_occur=0.01, n_leave=0.2, fill_value=None):
+        '''
+        Function to delete orders with rare values of some feature(or replace rare features with some value)
+
+        by: {"number", "occurrence"} the strategy of deleting(replacing) rare features:
+            "number": n_leave% of feature will be left, other - deleted(replaced)
+            нп. Ми хочемо лишити тільки 20% категорій
+            "occurrence": delete(replace) values that occur less than  min_occur% in the data
+            нп. Ми хочемо видалити(замінити) всі категорії, які зустрічаються менше 1% у даних
+
+        n_leave: % of feature values you want to leave (work only with by == "number")
+            P.S. If n_leave is number, not percent, it will be converted to percents automatically
+        min_occur: minimin % occurance in the data (work only with by == "occurrence")
+            P.S. If min_occur is number, not percent, it will be converted to percents automatically
+
+        fill_value: {None, strig} value to repleace rare values. If None, rare values will be deleted
+
+        '''
+        if by == "number":
+
+            if n_leave >= 1:
+                n_leave = n_leave/price_data[cat_col].nunique()
+
+            temp = price_data[cat_col].value_counts()
+            # 1-n_leave = % of the data we want to delete
+            th = temp.quantile(1-n_leave)
+            temp = temp[temp <= th]
+
+            if fill_value == None:
+                delete_orders = price_data[price_data[cat_col].isin(
+                    temp.index)].OrderId.unique()
+                price_data_less = price_data[~price_data["OrderId"].isin(
+                    delete_orders)]
+                print(
+                    f"{len(delete_orders)} orders were deleted({(len(delete_orders)/price_data.OrderId.nunique())*100}%)")
+            else:
+                price_data_less = price_data.copy()
+                price_data_less[cat_col] = np.where(price_data_less[cat_col].isin(
+                    temp.index), fill_value, price_data_less[cat_col])
+
+        elif by == "occurrence":
+            if min_occur < 1:
+                min_occur = min_occur*price_data.shape[0]
+
+            temp = price_data[cat_col].value_counts()
+            temp = temp[temp <= min_occur]
+            if fill_value == None:
+                delete_orders = price_data[price_data[cat_col].isin(
+                    temp.index)].OrderId.unique()
+                price_data_less = price_data[~price_data["OrderId"].isin(
+                    delete_orders)]
+                print(
+                    f"{len(delete_orders)} orders were deleted({(len(delete_orders)/price_data.OrderId.nunique())*100}%)")
+            else:
+                price_data_less = price_data.copy()
+                price_data_less[cat_col] = np.where(price_data_less[cat_col].isin(
+                    temp.index), fill_value, price_data_less[cat_col])
+
+        else:
+            print("by paramter is not valid")
+            return price_data
+        # TODO somothing went wrong
+        # print(
+        #     f"{price_data_less[cat_col].nunique()} {cat_col} left({(price_data_less[cat_col].nunique()/price_data[cat_col].nunique())*100}%)")
+        # print(
+        #     f"{price_data.shape[0] - price_data_less.shape[0]} rows were deleted({((price_data.shape[0] - price_data_less.shape[0])/price_data.shape[0])*100}%)")
+        return price_data_less

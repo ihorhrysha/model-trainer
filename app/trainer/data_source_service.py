@@ -18,7 +18,6 @@ class DataSource():
         )
 
     def main_query(self):
-        print(query_string)
         return self.query(query_string)
 
     def query(self, select):
