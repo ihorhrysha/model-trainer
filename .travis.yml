@@ -5,3 +5,5 @@ install:
 # command to run tests
 script:
   - make tests
+notifications:
+  slack: ucu-datascience:4Y7tTkbcnVJLy7O8ClUFTt2K
