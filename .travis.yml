@@ -1,9 +1,11 @@
 language: python
+env:
+  - FLASK_APP=manage.py
 install:
   - make install
-  - python manage.py db upgrade
+  - flask db upgrade
 # command to run tests
 script:
-  - make tests
+  - flask utils test
 notifications:
   slack: ucu-datascience:$SLACK_TOKEN

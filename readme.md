@@ -9,9 +9,9 @@ source venv/bin/activate
 
 make install
 
-python manage.py db upgrade
+flask db upgrade
 
-make run
+flask run
 ```
 
 goto http://localhost:5000/api/
