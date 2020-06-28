@@ -6,4 +6,9 @@ install:
 script:
   - make tests
 notifications:
-  slack: ucu-datascience:4Y7tTkbcnVJLy7O8ClUFTt2K
+  slack:
+    rooms:
+      - ucu-datascience:$SLACK_TOKEN
+    template:
+      - "Build <%{build_url}|#%{build_number}> (<%{compare_url}|%{commit}>) of %{repository_slug}@%{branch} by %{author} %{result} in %{duration}"
+      - "Build details: %{message}"
