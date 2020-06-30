@@ -20,5 +20,5 @@ def get_all_models():
     return Model.query.all()
 
 
-def get_model():
+def get_model(id):
     return Model.query.filter(Model.id == id).one()

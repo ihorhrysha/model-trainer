@@ -1,27 +1,31 @@
 from flask import request
 from flask_restplus import Resource, Namespace
-
-from app.trainer.data_source_service import DataSource
+from .dto import TrainDto
+from app.rest.models.dto import ModelDto
+# from app.trainer.data_source_service import DataSource
 # from app.trainer.data_preprocessor import DataPreprocessor
+from .service import train_model
 
-
-api = Namespace('tasks', description='Operations related to models mgmt')
-
+api = TrainDto.api
+train_dto = TrainDto.train_item
+model_dto = ModelDto.model_item
 
 @api.route('/train')
 class TrainModel(Resource):
 
-    def get(self):
+    #
+    # @api.response(201, 'Model successfully trained.')
+    @api.expect(train_dto)
+    @api.marshal_with(model_dto)
+    def post(self):
         """
         Start default training(for testing purposes)
         """
 
-        gbq_ds = DataSource("bigquery.cred.json")
-
-        df = gbq_ds.main_query()
-
+        #gbq_ds = DataSource("bigquery.cred.json")
+        #df = gbq_ds.main_query()
         # pd = DataPreprocessor(df)
-
         # pd.preprocess()
 
-        return "am trining" + str(df.shape)
+        data = request.json
+        return train_model(data)#"am trining" + str(df.shape)

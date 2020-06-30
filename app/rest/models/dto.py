@@ -6,5 +6,5 @@ class ModelDto():
                     description='Operations related to models mgmt')
     model_item = api.model('Model', {
         'id': fields.Integer(readOnly=True, description='The unique identifier of a model'),
-        'name': fields.String(required=True, description='Model name')
+        'name': fields.String(required=True, description='Model name'),
     })
