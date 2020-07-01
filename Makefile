@@ -4,7 +4,8 @@ clean:
 	find . -type f -name '*.pyc' -delete
 	find . -type f -name '*.log' -delete
 
-install: 
+install:
+	pip install -U pip
 	pip install -r requirements.txt
 
 tests:
