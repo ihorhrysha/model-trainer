@@ -1,16 +1,13 @@
-import pandas as pd
-from datetime import date, timedelta
-import calendar
-import random
-from countryinfo import CountryInfo
-import pycountry
+from functools import partial
+
 import numpy as np
+import pandas as pd
+import pycountry
+from countryinfo import CountryInfo
+from joblib import delayed, Parallel
 
 
 class DataPreprocessor:
-    # def __init__(self, df):
-    #     self.df = df
-
     def preprocess(self, df):
         # Feature construction
 
@@ -102,12 +99,14 @@ class DataPreprocessor:
         return df[~df['OrderId'].isin(orders_to_drop)]
 
     @staticmethod
-    def _finance_features(df):
-        df["OrderPrice"] = df["OrderAmount"] / df["OrderQty"]
-        df["BaseDiscount"] = (
-            df["BasePrice"] - df["OrderPrice"])/df["BasePrice"]
-        df["UserDiscount"] = (
-            df["UserPrice"] - df["OrderPrice"])/df["UserPrice"]
+    def _finance_features(df: pd.DataFrame):
+        df = df.copy()
+
+        df.eval('OrderPrice = OrderAmount / OrderQty', inplace=True)
+        df.eval('BaseDiscount = (BasePrice - OrderPrice) / BasePrice',
+                inplace=True)
+        df.eval('UserDiscount = (UserPrice - OrderPrice) / UserPrice',
+                inplace=True)
 
         # from transaction data
         df["CostPerItem"] = df["SoldCost"]/df["SoldQty"]
@@ -123,10 +122,11 @@ class DataPreprocessor:
             'CostPerItem'].apply(lambda x: x.ffill().bfill())
 
         # calculate dependant fields
-        df["ProfitPerItem"] = df["OrderPrice"] - df["CostPerItem"]
-        df["Profit"] = df["ProfitPerItem"]*df["SoldQty"]
+        df.eval('ProfitPerItem = OrderPrice - CostPerItem', inplace=True)
+        df.eval('Profit = ProfitPerItem * SoldQty', inplace=True)
 
-        df['SoldCost'].fillna(df['SoldQty']*df["CostPerItem"], inplace=True)
+        df['SoldCost'].fillna(df.eval('SoldQty * CostPerItem'),
+                              inplace=True)
         return df
 
     @staticmethod
@@ -146,10 +146,9 @@ class DataPreprocessor:
 
         """
 
+        df = df.copy()
         df["RFMD"].fillna(0, inplace=True)
-
         df["RFMD"] = df["RFMD"].astype(int)
-
         df["RFMD_zeros"] = df["RFMD"].apply(lambda x: str(x).zfill(4))
 
         #Recency, Frequency, Monetary, Duration
@@ -184,29 +183,42 @@ class DataPreprocessor:
                     return (country, "")
 
         unknown = []
-        regions = [set_info(x, "region")
-                   for x in price_data["OrderCountry"].unique()]
+        regions = Parallel(n_jobs=-1)(
+            delayed(partial(set_info, info="region"))(x)
+            for x in price_data["OrderCountry"].unique()
+        )
         print(f"Total {len(unknown)} country regions were not found")
-        print("Total rows of unknown region in the data=",
+        print("Total rows of unknown region in the data: ",
               price_data[price_data.OrderCountry.isin(unknown)].shape[0])
         unknown = []
-        subregions = [set_info(x, "subregion")
-                      for x in price_data["OrderCountry"].unique()]
-        print(f"Total {len(unknown)} country subregion were not found")
-        print("Total rows of unknown subregion in the data=",
+        subregions = Parallel(n_jobs=-1)(
+            delayed(partial(set_info, info="subregion"))(x)
+            for x in price_data["OrderCountry"].unique()
+        )
+        print(f"Total {len(unknown)} country subregions were not found")
+        print("Total rows of unknown subregions in the data: ",
               price_data[price_data.OrderCountry.isin(unknown)].shape[0])
 
-        price_data = price_data.merge(pd.DataFrame(regions, columns=[
-            "OrderCountry", "CountryRegion"]), on="OrderCountry", how="left")
-        price_data = price_data.merge(pd.DataFrame(subregions, columns=[
-            "OrderCountry", "CountrySubregion"]), on="OrderCountry", how="left")
-        return price_data
+        df = price_data.merge(
+            pd.DataFrame(regions,
+                         columns=["OrderCountry", "CountryRegion"]),
+            on="OrderCountry",
+            how="left"
+        )
+        df = df.merge(
+            pd.DataFrame(subregions,
+                         columns=["OrderCountry", "CountrySubregion"]),
+            on="OrderCountry",
+            how="left"
+        )
+        return df
 
     @staticmethod
     def _time_features(df):
         '''
         Create time features from date
         '''
+        df = df.copy()
         df["OrderDay"] = df.OrderDate.dt.day
         df["OrderYearDay"] = df.OrderDate.dt.dayofyear
         df["OrderWeekDay"] = df.OrderDate.dt.weekday
@@ -216,12 +228,11 @@ class DataPreprocessor:
         return df
 
     @staticmethod
-    def _order_price_feature(df1):
+    def _order_price_feature(df):
         """ Create TotalOrderPrice feature (total BasePrice of items in order)
         """
-        df = df1.copy()
-        # df = df[['OrderId', 'BasePrice', 'OrderQty']].copy()
-        df['TotalOrderProductPrice'] = df['BasePrice'] * df['OrderQty']
+        df = df.copy()
+        df.eval('TotalOrderProductPrice = BasePrice * OrderQty', inplace=True)
 
         right_df = df[['OrderId', 'TotalOrderProductPrice']].\
             groupby('OrderId').\
@@ -230,7 +241,7 @@ class DataPreprocessor:
             rename(columns={'TotalOrderProductPrice': 'TotalOrderPrice'})
 
         if 'TotalOrderPrice' in df.columns:
-            df = df.drop(columns='TotalOrderPrice')
+            df.drop(columns='TotalOrderPrice', inplace=True)
         return df.merge(
             right_df,
             how='left',
@@ -238,12 +249,12 @@ class DataPreprocessor:
         )
 
     @staticmethod
-    def _order_revenue_feature(df1):
+    def _order_revenue_feature(df):
         """ Create TotalOrderRevenue feature (total OrderPrice of items in order)
         """
-        df = df1.copy()
-        # df = df[['OrderId', 'BasePrice', 'OrderQty']].copy()
-        df['TotalOrderProductRevenue'] = df['OrderPrice'] * df['OrderQty']
+        df = df.copy()
+        df.eval('TotalOrderProductRevenue = OrderPrice * OrderQty',
+                 inplace=True)
 
         right_df = df[['OrderId', 'TotalOrderProductRevenue']].\
             groupby('OrderId').\
@@ -252,7 +263,7 @@ class DataPreprocessor:
             rename(columns={'TotalOrderProductRevenue': 'TotalOrderRevenue'})
 
         if 'TotalOrderRevenue' in df.columns:
-            df = df.drop(columns='TotalOrderRevenue')
+            df.drop(columns='TotalOrderRevenue', inplace=True)
         return df.merge(
             right_df,
             how='left',
@@ -261,32 +272,26 @@ class DataPreprocessor:
 
     @staticmethod
     def _platform_preparation(data):
-
-        data.loc[data['IsExternal'] == True, 'ExternalInternal'] = 'external'
-        data.loc[data['IsExternal'] == False, 'ExternalInternal'] = 'internal'
-
+        data = data.copy()
+        data.loc[data['IsExternal'], 'ExternalInternal'] = 'external'
+        data.loc[~data['IsExternal'], 'ExternalInternal'] = 'internal'
         data['PlatformType'] = data['Region'] + '_' + data['ExternalInternal']
-
-        data.drop('ExternalInternal', axis=1)
-
+        data.drop('ExternalInternal', axis=1, inplace=True)
         return data
 
     @staticmethod
-    def _order_cost_feature(df1):
+    def _order_cost_feature(df):
         """ Create TotalOrderCost feature (total BasePrice of items in order)
         """
-        df = df1.copy()
-        # df = df[['OrderId', 'BasePrice', 'OrderQty']].copy()
-        df['TotalOrderProductCost'] = df['CostPerItem'] * df['OrderQty']
-
+        df = df.copy()
+        df.eval('TotalOrderProductCost = CostPerItem * OrderQty', inplace=True)
         right_df = df[['OrderId', 'TotalOrderProductCost']].\
             groupby('OrderId').\
             sum().\
             reset_index().\
             rename(columns={'TotalOrderProductCost': 'TotalOrderCost'})
-
         if 'TotalOrderCost' in df.columns:
-            df = df.drop(columns='TotalOrderCost')
+            df.drop(columns='TotalOrderCost', inplace=True)
         return df.merge(
             right_df,
             how='left',
@@ -294,33 +299,31 @@ class DataPreprocessor:
         )
 
     def _status_preparation(self, data):
-
         # Duplicate/trial from business perspective are not valid values(test, errors, and some other garbage)
-        df_filtered = data[data['Status'] != 'Duplicate/trial']
-
+        df_filtered = data.query('Status!= "Duplicate/trial"')
         df_filtered = self._delete_rare_cat(
-            df_filtered, 'Status', 'occurrence', min_occur=0.005, fill_value='Cancelled')
-
+            df_filtered, 'Status', 'occurrence',
+            min_occur=0.005,
+            fill_value='Cancelled'
+        )
         df_filtered.loc[df_filtered.Status.isna(), 'Status'] = 'Cancelled'
-
         return df_filtered
 
     def _segment_preparation(self, data):
-
         # change rare categories to 'Сегмент не определен' within non nans
-        df_filtered = data[~data.Segment.isnull()]
+        df_filtered = data[~data['Segment'].isnull()]
         df_filtered = self._delete_rare_cat(
-            df_filtered, 'Segment', 'occurrence', min_occur=0.005, fill_value='Сегмент не определен')
-
+            df_filtered, 'Segment', 'occurrence',
+            min_occur=0.005,
+            fill_value='Сегмент не определен'
+        )
         # Сегмент не определен == NaN
-        df_nan = data[data.Segment.isnull()]
-        df_nan['Segment'] = 'Сегмент не определен'
-
+        df_nan = data[data['Segment'].isnull()]
+        df_nan.eval('Segment = "Сегмент не определен"', inplace=True)
         return pd.concat([df_nan, df_filtered])
 
     @staticmethod
-    def _nan_cleaner(df, threshold=0.7):
-
+    def _nan_cleaner(df: pd.DataFrame, threshold=0.7):
         # Not sure if needed but can make TransactionDate equal OrderData
         df['TransactionDate'].fillna(df['OrderDate'], inplace=True)
 
@@ -336,9 +339,7 @@ class DataPreprocessor:
                 df[cat_with_nan].value_counts().idxmax(), inplace=True)
 
         # Filling all missing values with 0
-        df = df.fillna(0)
-
-        return df
+        return df.fillna(0)
 
     @staticmethod
     def _delete_rare_cat(price_data, cat_col, by="number", min_occur=0.01, n_leave=0.2, fill_value=None):
