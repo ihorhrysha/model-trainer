@@ -2,7 +2,7 @@ import abc
 import logging
 import pickle as pkl
 from datetime import datetime
-from typing import Dict, Union, Any
+from typing import Dict, Union
 
 import numpy as np
 import pandas as pd
@@ -24,6 +24,18 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
+
+
+def pickle(obj, filepath):
+    with open(filepath, 'wb') as f:
+        pkl.dump(obj, f)
+
+
+def unpickle(filepath):
+    with open(filepath, 'rb') as f:
+        obj = pkl.load(f)
+    return obj
+
 
 def order_price_feature(df1):
     """ Create TotalOrderPrice feature (total BasePrice of items in order)
@@ -125,7 +137,12 @@ def discount_metric(y, y_pred, ds_test):
 
 
 class LogModelWrapper:
-    def __init__(self, model, encoder=preprocessing.StandardScaler, encoder_params={}):
+    def __init__(
+            self,
+            model,
+            encoder=preprocessing.StandardScaler,
+            encoder_params={}
+    ):
         self.model = model
         self.y_tr = encoder(**encoder_params)
 
@@ -135,7 +152,9 @@ class LogModelWrapper:
         return self.model.fit(X, self.y_tr.fit_transform(y), **kwargs)
 
     def predict(self, X, **kwargs):
-        return np.expm1(self.y_tr.inverse_transform(self.model.predict(X, **kwargs)))
+        return np.expm1(self.y_tr.inverse_transform(
+            self.model.predict(X, **kwargs)
+        ))
 
 
 class AbstractTrainer(abc.ABC):
@@ -153,7 +172,7 @@ class AbstractTrainer(abc.ABC):
     def run(self):
         logger.info('Loading dataset...')
         dataset = self.load_dataset()
-        # with open('df.pkl', 'rb') as f:
+        # with open('/home/andrii/.config/JetBrains/PyCharm2020.1/scratches/python-proj/df.pkl', 'rb') as f:
         #     dataset = pkl.load(f)
         logger.info('Dataset loaded.')
 
@@ -171,8 +190,16 @@ class AbstractTrainer(abc.ABC):
         logger.info('Transforming features...')
         ds_train_transformed, ds_test_transformed = \
             self.transform_features(ds_train, ds_test)
+        # pickle(
+        #     (ds_test, ds_train_transformed, ds_test_transformed),
+        #     '/home/andrii/.config/JetBrains/PyCharm2020.1/scratches/python-proj/ds_train_test_transformed.pkl'
+        # )
         logger.info('Features transformed.')
         del ds_train
+
+        # self.save_model()
+        # ds_test, ds_train_transformed, ds_test_transformed = unpickle('/home/andrii/.config/JetBrains/PyCharm2020.1/scratches/python-proj/ds_train_test_transformed.pkl')
+        # self.load_model(None)
 
         logger.info('Training model...')
         self.train_model(ds_train_transformed)
@@ -185,9 +212,9 @@ class AbstractTrainer(abc.ABC):
         del ds_test, ds_test_transformed
 
         logger.info('Saving model...')
+        # self.load_model(None)
         model_id = self.save_model()
         logger.info(f'Model saved with model_id={model_id}.')
-        # self.load_model(None)
         return self.model_id
 
     def load_dataset(self) -> pd.DataFrame:
@@ -196,14 +223,16 @@ class AbstractTrainer(abc.ABC):
         #     pkl.dump(dataset, f)
         return dataset
 
-    def preprocess_dataset(self, dataset: pd.DataFrame) -> pd.DataFrame:
+    @staticmethod
+    def preprocess_dataset(dataset: pd.DataFrame) -> pd.DataFrame:
         dp = DataPreprocessor()
         dataset = dp.preprocess(dataset)
         # with open('df_preprocessed.pkl', 'wb') as f:
         #     pkl.dump(dataset, f)
         return dataset
 
-    def split_dataset(self, df: pd.DataFrame) -> (pd.DataFrame, pd.DataFrame):
+    @staticmethod
+    def split_dataset(df: pd.DataFrame) -> (pd.DataFrame, pd.DataFrame):
         """ Splits dataset into `train` and `test`, taking for `test` 9th, 10th,
         11th months of 2019 and all the previous months for `train`.
         December 2020 is dropped.
@@ -217,14 +246,17 @@ class AbstractTrainer(abc.ABC):
     def transform_features(
             self,
             ds_train: pd.DataFrame,
-            ds_test: pd.DataFrame
+            ds_test: pd.DataFrame,
+            return_type: str = 'df'  # 'df' or 'dict'
     ) -> (ModelInputType, Transformer):
         encoding_params = self.model_params.get('encoding_params',
                                                 default_encoding_params)
         transformer = Transformer(encoding_params)
         transformer.fit(ds_train)
-        ds_train_transformed = transformer.transform(ds_train, return_type='df')
-        ds_test_transformed = transformer.transform(ds_test, return_type='df')
+        ds_train_transformed = transformer.transform(ds_train,
+                                                     return_type=return_type)
+        ds_test_transformed = transformer.transform(ds_test,
+                                                    return_type=return_type)
         self.transformer = transformer
         return ds_train_transformed, ds_test_transformed
 
@@ -243,29 +275,22 @@ class AbstractTrainer(abc.ABC):
         # disc_metric, pred_revenue, true_revenue = \
         #     discount_metric(y_test, pred, ds_test)
         metrics = {
-            'mse': mean_squared_error(ds_test.UserDiscount, pred),
-            'mae': mean_absolute_error(ds_test.UserDiscount, pred),
+            'mse': mean_squared_error(y_test, pred),
+            'mae': mean_absolute_error(y_test, pred),
             'discount_metric': None,  #disc_metric,
             'true_revenue': None,  #true_revenue,
             'pred_revenue': None,  #pred_revenue
         }
-        print("MSE:              {:.6f}".format(metrics['mse']))
-        print("MAE:              {:.6f}".format(metrics['mae']))
-        # print("Discount metric:  {:.6f}".format(metrics['discount_metric']))
-        # print("Revenue:")
-        # print("  True:           {:.6f}".format(true_revenue))
-        # print("  Predicted:      {:.6f}".format(pred_revenue))
+        logger.info("MSE:              {:.6f}".format(metrics['mse']))
+        logger.info("MAE:              {:.6f}".format(metrics['mae']))
+        # logger.info("Discount metric:  {:.6f}".format(metrics['discount_metric']))
+        # logger.info("Revenue:")
+        # logger.info("  True:           {:.6f}".format(true_revenue))
+        # logger.info("  Predicted:      {:.6f}".format(pred_revenue))
         self.metrics = metrics
 
     def save_model(self) -> str:
-        artifacts = {
-            'model_id': self.model_id,
-            'model_type': self.model_type,
-            'model_params': self.model_params,
-            'model': pkl.dumps(self.model),
-            'transformer': pkl.dumps(self.transformer),
-            'metrics': self.metrics
-        }
+        artifacts = self.serialized_artifacts
         # with open('model.pkl', 'wb') as f:
         #     pkl.dump(artifacts, f)
         model_source = ModelSource()
@@ -273,16 +298,69 @@ class AbstractTrainer(abc.ABC):
         return self.model_id
 
     def load_model(self, model_id: str):
-        # with open('model.pkl', 'rb') as f:
-        #     artifacts = pkl.load(f)
-        model_source = ModelSource()
-        artifacts = model_source.get_model(model_id)
-        self.model_id = artifacts['model_id']
-        self.model_type = artifacts['model_type']
-        self.model_params = artifacts['model_params']
-        self.model = pkl.loads(artifacts['model'])
-        self.transformer = pkl.loads(artifacts['transformer'])
-        self.metrics = artifacts['metrics']
+        with open('model.pkl', 'rb') as f:
+            artifacts = pkl.load(f)
+        # model_source = ModelSource()
+        # artifacts = model_source.get_model(model_id)
+        self.from_serialized_artifacts(**artifacts)
+
+    @property
+    def artifacts(self):
+        return {
+            'model_id': self.model_id,
+            'model_type': self.model_type,
+            'model_params': self.model_params,
+            'model': self.model,
+            'transformer': self.transformer,
+            'metrics': self.metrics
+        }
+
+    @property
+    def serialized_artifacts(self):
+        artifacts = self.artifacts
+        artifacts.update({
+            'model': pkl.dumps(artifacts['model']),
+            'transformer': pkl.dumps(artifacts['transformer']),
+        })
+        return artifacts
+
+    def from_artifacts(
+            self,
+            *,
+            model_id=None,
+            model_type=None,
+            model_params=None,
+            model=None,
+            transformer=None,
+            metrics=None
+    ):
+        if model_id:
+            self.model_id = model_id
+        if model_type:
+            self.model_type = model_type
+        self.model_params = model_params
+        self.model = model
+        self.transformer = transformer
+        self.metrics = metrics
+
+    def from_serialized_artifacts(
+            self,
+            *,
+            model_id=None,
+            model_type=None,
+            model_params=None,
+            model=None,
+            transformer=None,
+            metrics=None
+    ):
+        self.from_artifacts(
+            model_id=model_id,
+            model_type=model_type,
+            model_params=model_params,
+            model=pkl.loads(model) if model else None,
+            transformer=pkl.loads(transformer) if transformer else None,
+            metrics=metrics
+        )
 
 
 class LRTrainer(AbstractTrainer):
@@ -302,16 +380,14 @@ class NNTrainer(AbstractTrainer):
     def transform_features(
             self,
             ds_train: pd.DataFrame,
-            ds_test: pd.DataFrame
+            ds_test: pd.DataFrame,
+            return_type: str = 'dict'
     ) -> (ModelInputType, Transformer):
-        encoding_params = self.model_params.get('encoding_params',
-                                                default_encoding_params)
-        transformer = Transformer(encoding_params)
-        transformer.fit(ds_train)
-        ds_train_transformed = transformer.transform(ds_train, return_type='dict')
-        ds_test_transformed = transformer.transform(ds_test, return_type='dict')
-        self.transformer = transformer
-        return ds_train_transformed, ds_test_transformed
+        return super(NNTrainer, self).transform_features(
+            ds_train,
+            ds_test,
+            return_type=return_type
+        )
 
     def train_model(self, ds_train: ModelInputType):
         y = ds_train.pop('UserDiscount')
@@ -320,29 +396,29 @@ class NNTrainer(AbstractTrainer):
         tf.random.set_seed(42)
         inputs_num = [
             keras.Input(
-                shape=v.shape,
+                shape=(v.shape[1], ),
                 dtype=tf.float32,
                 name=k,
             ) for k, v in X.items()
         ]
-        x = keras.layers.concatenate(inputs_num, axis=1, name='input')
+        x = keras.layers.concatenate(inputs_num, axis=-1, name='input')
         activation = 'relu'  # worked better than 'elu'
 
-        x = keras.layers.Dense(16,
-                       activation=activation,
-                       name='dense_1',
-                       kernel_initializer=keras.initializers.RandomUniform(
-                           seed=42)
-                       # works better than 'RandomNorm' and 'glorot'
-                       )(x)
+        x = keras.layers.Dense(
+            16,
+            activation=activation,
+            name='dense_1',
+            kernel_initializer=keras.initializers.RandomUniform(seed=42)
+            # works better than 'RandomNorm' and 'glorot'
+        )(x)
         # x = tfkl.BatchNormalization()(x) # works worse
-        x = keras.layers.Dense(8,
-                       activation=activation,
-                       name='dense_2',
-                       kernel_initializer=keras.initializers.RandomUniform(
-                           seed=42)
-                       # works better than 'RandomNorm' and 'glorot'
-                       )(x)
+        x = keras.layers.Dense(
+            8,
+            activation=activation,
+            name='dense_2',
+            kernel_initializer=keras.initializers.RandomUniform(seed=42)
+            # works better than 'RandomNorm' and 'glorot'
+        )(x)
         # x = tfkl.BatchNormalization()(x) # works worse
         x_out = keras.layers.Dense(1, name='dense_out', use_bias=False)(x)
 
@@ -382,6 +458,56 @@ class NNTrainer(AbstractTrainer):
         )
         model.model.load_weights('model.hdf5')
         self.model = model
+
+    @property
+    def serialized_artifacts(self):
+        artifacts = self.artifacts
+        artifacts.update({
+            'model': self._serialize_keras_log_model(artifacts['model']),
+            'transformer': pkl.dumps(artifacts['transformer']),
+        })
+        return artifacts
+
+    def from_serialized_artifacts(
+            self,
+            *,
+            model_id=None,
+            model_type=None,
+            model_params=None,
+            model=None,
+            transformer=None,
+            metrics=None
+    ):
+        self.from_artifacts(
+            model_id=model_id,
+            model_type=model_type,
+            model_params=model_params,
+            model=self._deserialize_keras_log_model(model) if model else None,
+            transformer=pkl.loads(transformer) if transformer else None,
+            metrics=metrics
+        )
+
+    @staticmethod
+    def _serialize_keras_log_model(log_model: LogModelWrapper) -> bytes:
+        tmp_file_name = 'model.tmp.h5'
+        log_model.model.save(tmp_file_name)
+        with open(tmp_file_name, 'rb') as f:
+            bytes = f.read()
+        log_model.model = bytes
+        return pkl.dumps(log_model)
+
+    @staticmethod
+    def _deserialize_keras_log_model(serialized: bytes) -> LogModelWrapper:
+        log_model = pkl.loads(serialized)
+        if not isinstance(log_model, LogModelWrapper):
+            return log_model
+        else:
+            tmp_file_name = 'model.tmp.h5'
+            with open(tmp_file_name, 'wb') as f:
+                f.write(log_model.model)
+            log_model.model = keras.models.load_model(tmp_file_name)
+            return log_model
+
 
 class TreeTrainer(AbstractTrainer):
     ModelInputType = pd.DataFrame

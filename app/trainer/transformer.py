@@ -1,4 +1,7 @@
+import os
+
 import numpy as np
+from joblib import delayed, Parallel
 from sklearn import preprocessing, feature_extraction
 from tqdm import tqdm
 from typing import List, Dict
@@ -16,11 +19,12 @@ class FeatureHasher(feature_extraction.FeatureHasher):
     def _prepare_data(x: pd.Series):
         return x.astype('str').values.reshape((-1, 1))
 
-    def fit(self, X):
+    def fit(self, X=None, y=None):
         return self
 
-    def fit_transform(self, X):
-        return super().fit_transform(self._prepare_data(X)).toarray()
+    def fit_transform(self, X, y=None, **fit_params: dict):
+        return super().fit_transform(self._prepare_data(X), y, **fit_params
+                                     ).toarray()
 
     def transform(self, X):
         return super().transform(self._prepare_data(X)).toarray()
@@ -31,14 +35,14 @@ class StandardScaler(preprocessing.StandardScaler):
     def _prepare_data(x: pd.Series):
         return x.values.reshape((-1, 1))
 
-    def fit(self, X):
-        return super().fit(self._prepare_data(X))
+    def fit(self, X, y=None):
+        return super().fit(self._prepare_data(X), y)
 
-    def fit_transform(self, X):
-        return super().fit_transform(self._prepare_data(X))
+    def fit_transform(self, X, y=None, **fit_params: dict):
+        return super().fit_transform(self._prepare_data(X), y, **fit_params)
 
-    def transform(self, X):
-        return super().transform(self._prepare_data(X))
+    def transform(self, X, copy=None):
+        return super().transform(self._prepare_data(X), copy=copy)
 
 
 class LabelEncoder(preprocessing.LabelEncoder):
@@ -72,11 +76,11 @@ class OneHotEncoder(preprocessing.OneHotEncoder):
         res = x.values.reshape((-1, 1))
         return res
 
-    def fit(self, X):
-        return super().fit(self._prepare_data(X))
+    def fit(self, X, y=None):
+        return super().fit(self._prepare_data(X), y)
 
-    def fit_transform(self, X):
-        return super().fit_transform(self._prepare_data(X))
+    def fit_transform(self, X, y=None):
+        return super().fit_transform(self._prepare_data(X), y)
 
     def transform(self, X):
         return super().transform(self._prepare_data(X))
@@ -156,59 +160,54 @@ class Transformer:
                 raise ValueError(f'Duplicate feature name `{name}`')
             self.features[name] = params
 
-    def fit(self, df, verbose=False):
-        # pbar = tqdm if verbose else lambda x: x
-        for name, params in tqdm(self.features.items(), desc='fit'):
-            encoder = params['encoder']
-            if params['column'] not in df.columns:
-                print(f"No `{params['column']}` column")
-                continue
-            x = df[params['column']].copy()
-            if x.isna().any():
-                print(
-                    f"{x.isna().sum()} of {x.shape[0]} are NaN in `{params['column']}` column")
-                if params['encoder_type'] in ('hash', 'ohe'):
-                    print(
-                        f"Encoder type is {params['encoder_type']}, which is ABLE to be fitted")
-                    x = x.fillna('nan')
-                else:
-                    print(
-                        f"Encoder type is {params['encoder_type']}, which is UNABLE to be fitted")
-                    continue
-            encoder.fit(x)
+    @staticmethod
+    def _transform_column(df, params, mode: str):
+        encoder = params['encoder']
+        if params['column'] not in df.columns:
+            raise ValueError(f"No `{params['column']}` column")
+        x = df[params['column']].copy()
+        if x.isna().any():
+            print(f"{x.isna().sum()} of {x.shape[0]} are NaN in "
+                  f"`{params['column']}` column")
+            if params['encoder_type'] in ('hash', 'ohe'):
+                print(f"Encoder type is {params['encoder_type']}, "
+                      f"which is ABLE to transform")
+                x = x.fillna('nan')
+            else:
+                raise ValueError(f"Encoder type is {params['encoder_type']}, "
+                                 f"which is UNABLE to transform")
+        if mode == 'fit':
+            return encoder.fit(x)
+        elif mode == 'transform':
+            return encoder.transform(x)
+        else:
+            raise ValueError(f'Unknown mode: {mode}')
+
+    def fit(self, df):
+        encoders = Parallel(n_jobs=1)(
+            delayed(self._transform_column)(df, params, mode='fit')
+            for params in tqdm(self.features.values(), desc='fit')
+        )
+        for name, new_encoder in zip(self.features.keys(), encoders):
+            self.features[name]['encoder'] = new_encoder
 
     def transform(self, df, verbose=False, return_type='dict'):
         """
         return_type: str, one of {'dict', 'df'}
         """
-        res = {}
-        # pbar = tqdm if verbose else lambda x: x
-        for name, params in tqdm(self.features.items(), desc='transform'):
-            encoder = params['encoder']
-            if params['column'] not in df.columns:
-                print(f"No `{params['column']}` column")
-                continue
-            x = df[params['column']].copy()
-            if x.isna().any():
-                print(
-                    f"{x.isna().sum()} of {x.shape[0]} are NaN in `{params['column']}` column")
-                if params['encoder_type'] in ('hash', 'ohe'):
-                    print(
-                        f"Encoder type is {params['encoder_type']}, which is ABLE to transform")
-                    x = x.fillna('nan')
-                else:
-                    print(
-                        f"Encoder type is {params['encoder_type']}, which is UNABLE to transform")
-                    continue
-            res[name] = encoder.transform(x)
+        res = Parallel(n_jobs=os.cpu_count() - 1)(
+            delayed(self._transform_column)(df, params, mode='transform')
+            for params in tqdm(self.features.values(), desc='transform')
+        )
+        res = {name: value for name, value in zip(self.features.keys(), res)}
 
         if return_type == 'dict':
             return res
         elif return_type == 'df':
             return self._dict_to_df(res, df.index.values)
         else:
-            raise ValueError(
-                f"Unknown return type `{return_type}`. Valid options are {'dict', 'df'}")
+            raise ValueError(f"Unknown return type `{return_type}`. "
+                             "Valid options are {'dict', 'df'}")
 
     @staticmethod
     def _dict_to_df(d, index):

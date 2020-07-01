@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from google.cloud import bigquery
 from google.oauth2 import service_account
 from flask import current_app
@@ -27,6 +29,7 @@ class DataSource:
 class ModelSource(DataSource):
     def push_model(
             self,
+            *,
             model_id,
             model_type=None,
             model_params=None,
@@ -34,22 +37,21 @@ class ModelSource(DataSource):
             transformer=None,
             metrics=None
     ):
-        model_artifacts = {
-            'model_id': model_id,
-            'model_type': 'null' if model_type is None else str(model_type),
-            'model_params': 'null' if model_params is None else str(model_params),
-            'model': 'null' if model is None else model,
-            'transformer': 'null' if transformer is None else transformer,
-            'metrics': 'null'
-        }
-        insert = """
-        insert models.Models (model_id, model_type, model_params, model, transformer, metrics, datetime)
-        values('{model_id}', '{model_type}', '{model_params}', {model}, {transformer}, {metrics}, current_datetime())
-        """.format(**model_artifacts)
-        job = self.client.query(insert)
-        result = job.result()
-        return result
-
+        table_id = 'models.Models'
+        table = self.client.get_table(table_id)
+        rows_to_insert = [(
+            model_id,
+            model_type,
+            str(model_params),
+            model,
+            transformer,
+            metrics,
+            datetime.now()
+        )]
+        errors = self.client.insert_rows(table, rows_to_insert)
+        if errors:
+            raise RuntimeError(
+                'An error occurred while saving model to BigQuery')
 
     def get_model(self, model_id):
         raise NotImplementedError
