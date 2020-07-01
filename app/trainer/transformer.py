@@ -1,6 +1,6 @@
 import numpy as np
 from sklearn import preprocessing, feature_extraction
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 from typing import List, Dict
 import pandas as pd
 
@@ -157,8 +157,8 @@ class Transformer:
             self.features[name] = params
 
     def fit(self, df, verbose=False):
-        pbar = tqdm if verbose else lambda x: x
-        for name, params in pbar(self.features.items(), desc='fit'):
+        # pbar = tqdm if verbose else lambda x: x
+        for name, params in tqdm(self.features.items(), desc='fit'):
             encoder = params['encoder']
             if params['column'] not in df.columns:
                 print(f"No `{params['column']}` column")
@@ -182,8 +182,8 @@ class Transformer:
         return_type: str, one of {'dict', 'df'}
         """
         res = {}
-        pbar = tqdm if verbose else lambda x: x
-        for name, params in pbar(self.features.items(), desc='transform'):
+        # pbar = tqdm if verbose else lambda x: x
+        for name, params in tqdm(self.features.items(), desc='transform'):
             encoder = params['encoder']
             if params['column'] not in df.columns:
                 print(f"No `{params['column']}` column")

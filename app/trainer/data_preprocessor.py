@@ -47,6 +47,7 @@ class DataPreprocessor:
 
         return df
 
+    @staticmethod
     def _get_products_wo_price(self, df):
         all_nan_products = df[
             ['Product', 'UserPrice', 'BasePrice']].\
@@ -63,6 +64,7 @@ class DataPreprocessor:
         orders_to_drop = orders_to_drop['OrderId'].unique()
         return df[~df['OrderId'].isin(orders_to_drop)]
 
+    @staticmethod
     def _filter_orders_wo_price(self, df):
         """ Drop orders with some missing prices
         """
@@ -71,6 +73,7 @@ class DataPreprocessor:
         orders_to_drop = orders_to_drop[orders_to_drop].index.unique()
         return df[~df['OrderId'].isin(orders_to_drop)]
 
+    @staticmethod
     def _filter_orders_range(self, df, column, range=(0.3, 1.5)):
         """ Drop orders with suspiciously high or low value of `column` (relatively to the mean value for the Product)
         """
@@ -84,18 +87,21 @@ class DataPreprocessor:
         orders_to_drop = df[df.index.isin(rows_to_drop)]['OrderId'].unique()
         return df[~df['OrderId'].isin(orders_to_drop)]
 
+    @staticmethod
     def _drop_orders_w_negative_values(self, df, column):
         """ Drops orders with any negative value in `column` (e.g. to drop negative discounts)
         """
         orders_to_drop = df[df[column] < 0]['OrderId'].unique()
         return df[~df['OrderId'].isin(orders_to_drop)]
 
+    @staticmethod
     def _drop_orders_nan_values(self, df, column):
         """ Drops orders with nan value in `column` (e.g. to drop nan discounts)
         """
         orders_to_drop = df[df[column].isna()]['OrderId'].unique()
         return df[~df['OrderId'].isin(orders_to_drop)]
 
+    @staticmethod
     def _finance_features(self, df):
         df["OrderPrice"] = df["OrderAmount"] / df["OrderQty"]
         df["BaseDiscount"] = (
@@ -123,6 +129,7 @@ class DataPreprocessor:
         df['SoldCost'].fillna(df['SoldQty']*df["CostPerItem"], inplace=True)
         return df
 
+    @staticmethod
     def _construct_RFMD(self, df):
         """ 
 
@@ -153,6 +160,7 @@ class DataPreprocessor:
 
         return df
 
+    @staticmethod
     def _location_features(self, price_data, if_print=True):
         '''
         Function to construct two location features: region and subregion
@@ -194,6 +202,7 @@ class DataPreprocessor:
             "OrderCountry", "CountrySubregion"]), on="OrderCountry", how="left")
         return price_data
 
+    @staticmethod
     def _time_features(self, df):
         '''
         Create time features from date
@@ -206,6 +215,7 @@ class DataPreprocessor:
         df["OrderMonth"] = df.OrderDate.dt.month
         return df
 
+    @staticmethod
     def _order_price_feature(self, df1):
         """ Create TotalOrderPrice feature (total BasePrice of items in order)
         """
@@ -227,6 +237,7 @@ class DataPreprocessor:
             on='OrderId'
         )
 
+    @staticmethod
     def _order_revenue_feature(self, df1):
         """ Create TotalOrderRevenue feature (total OrderPrice of items in order)
         """
@@ -248,6 +259,7 @@ class DataPreprocessor:
             on='OrderId'
         )
 
+    @staticmethod
     def _platform_preparation(self, data):
 
         data.loc[data['IsExternal'] == True, 'ExternalInternal'] = 'external'
@@ -259,6 +271,7 @@ class DataPreprocessor:
 
         return data
 
+    @staticmethod
     def _order_cost_feature(self, df1):
         """ Create TotalOrderCost feature (total BasePrice of items in order)
         """
@@ -305,6 +318,7 @@ class DataPreprocessor:
 
         return pd.concat([df_nan, df_filtered])
 
+    @staticmethod
     def _nan_cleaner(self, df, threshold=0.7):
 
         # Not sure if needed but can make TransactionDate equal OrderData
@@ -326,6 +340,7 @@ class DataPreprocessor:
 
         return df
 
+    @staticmethod
     def _delete_rare_cat(self, price_data, cat_col, by="number", min_occur=0.01, n_leave=0.2, fill_value=None):
         '''
         Function to delete orders with rare values of some feature(or replace rare features with some value)

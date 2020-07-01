@@ -1,12 +1,12 @@
 import yaml
 
-encoding_params = yaml.safe_load("""
+default_encoding_params = yaml.safe_load("""
 # BaseDiscount:
 #     column: BaseDiscount
 #     encoder: null
-# UserDiscount:
-#     column: UserDiscount
-#     encoder: null
+UserDiscount:
+    column: UserDiscount
+    encoder: null
 
 BasePrice:
     column: BasePrice
