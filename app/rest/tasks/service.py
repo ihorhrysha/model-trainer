@@ -8,7 +8,7 @@ from app.database import db
 from flask import abort
 
 
-def train_model(model_type: str, **model_params):
+def train_model(model_type: str = 'lr', **model_params) -> str:
     if model_type == "lr":
         trainer = LRTrainer(model_type)
     elif model_type == "nn":
@@ -19,4 +19,4 @@ def train_model(model_type: str, **model_params):
         trainer = None
         abort(400)
     model_id = trainer.run()
-    return Model(model_id)
+    return model_id

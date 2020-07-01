@@ -20,7 +20,10 @@ from app.trainer.encoding_params import default_encoding_params
 from app.trainer.transformer import Transformer
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 
 def order_price_feature(df1):
     """ Create TotalOrderPrice feature (total BasePrice of items in order)
@@ -156,7 +159,7 @@ class AbstractTrainer(abc.ABC):
 
         logger.info('Preprocessing dataset...')
         dataset = self.preprocess_dataset(dataset)
-        # with open('df_preprocessed.pkl', 'rb') as f:
+        # with open('/home/andrii/.config/JetBrains/PyCharm2020.1/scratches/python-proj/df_preprocessed.pkl', 'rb') as f:
         #     dataset = pkl.load(f)
         logger.info('Dataset preprocessed.')
 
