@@ -1,0 +1,341 @@
+import yaml
+
+default_encoding_params = yaml.safe_load("""
+# BaseDiscount:
+#     column: BaseDiscount
+#     encoder: null
+UserDiscount:
+    column: UserDiscount
+    encoder: null
+
+BasePrice:
+    column: BasePrice
+    encoder: standard
+# CostPerItem: ### contains nan
+#     column: CostPerItem 
+#     encoder: standard
+OrderQty:
+    column: OrderQty
+    encoder: standard
+# SoldCost: ### contains nan
+#     column: SoldCost
+#     encoder: standard
+SoldQty:
+    column: SoldQty
+    encoder: standard
+TotalOrderPrice:
+    column: TotalOrderPrice  
+    encoder: standard
+TotalOrderProductPrice:
+    column: TotalOrderProductPrice
+    encoder: standard
+UserPrice:
+    column: UserPrice
+    encoder: standard
+
+IsExternal:
+    column: IsExternal
+    encoder: label
+IsVirtual:
+    column: IsVirtual
+    encoder: label
+Recency:
+    column: Recency 
+    encoder: label
+Frequency:
+    column: Frequency
+    encoder: label
+Monetary:
+    column: Monetary
+    encoder: label
+Duration:
+    column: Duration
+    encoder: label
+
+CountryRegion:
+    column: CountryRegion
+    encoder: ohe
+    drop: null
+CountrySubregion:
+    column: CountrySubregion
+    encoder: ohe
+    drop: null
+PlatformType:
+    column: PlatformType
+    encoder: ohe
+    bins: null
+Region:
+    column: Region
+    encoder: ohe
+    drop: null
+Segment:
+    column: Segment
+    encoder: ohe
+    drop: null
+StoreGroup:
+    column: StoreGroup
+    encoder: ohe
+    drop: null
+UnifiedPriceType:
+    column: UnifiedPriceType
+    encoder: ohe
+    drop: null
+OrderDayOhe:
+    column: OrderDay
+    encoder: ohe
+    drop: null
+OrderWeekDayOhe:
+    column: OrderWeekDay
+    encoder: ohe
+    drop: null
+OrderMonthOhe:
+    column: OrderMonth
+    encoder: ohe
+    drop: null
+
+Brand:
+    column: Brand
+    encoder: hash
+    bins: 7
+CategoryId:
+    column: CategoryId
+    encoder: hash
+    bins: 4
+ClientCode:
+    column: ClientCode
+    encoder: hash
+    bins: 17
+ManagerId:
+    column: ManagerId
+    encoder: hash
+    bins: 6
+Product:
+    column: Product
+    encoder: hash
+    bins: 10
+OrderCountry:
+    column: OrderCountry
+    encoder: hash
+    bins: 8
+Pratform:
+    column: Pratform
+    encoder: hash
+    bins: 5
+RFMD:
+    column: RFMD
+    encoder: hash
+    bins: 7
+# State:
+#     column: State
+#     encoder: hash
+#     bins: 9
+OrderYearDayEnc:
+    column: OrderYearDay
+    encoder: hash
+    bins: 9
+OrderWeekEnc:
+    column: OrderWeek
+    encoder: hash
+    bins: 6
+
+OrderYearDay:
+    column: OrderYearDay
+    encoder: time
+    kwargs:
+        min: 1
+        max: 365
+OrderWeekDay:
+    column: OrderWeekDay
+    encoder: time
+    kwargs:
+        min: 0
+        max: 7
+OrderHour:
+    column: OrderHour
+    encoder: time
+    kwargs:
+        min: 0
+        max: 24
+""")
+
+encoding_params_trees = yaml.safe_load("""
+# BaseDiscount:
+#     column: BaseDiscount
+#     encoder: null
+# UserDiscount:
+#     column: UserDiscount
+#     encoder: null
+
+BasePrice:
+    column: BasePrice
+    encoder: standard
+CostPerItem: ### contains nan
+    column: CostPerItem 
+    encoder: standard
+OrderQty:
+    column: OrderQty
+    encoder: standard
+#SoldCost: ### contains nan
+#    column: SoldCost
+#    encoder: standard
+SoldQty:
+    column: SoldQty
+    encoder: standard
+#TotalOrderProductCost:
+#    column: TotalOrderProductCost  
+#    encoder: standard
+#TotalOrderCost:
+#    column: TotalOrderCost  
+#    encoder: standard
+TotalOrderPrice:
+    column: TotalOrderPrice  
+    encoder: standard
+TotalOrderProductPrice:
+    column: TotalOrderProductPrice
+    encoder: standard
+UserPrice:
+    column: UserPrice
+    encoder: standard
+IsExternal:
+    column: IsExternal
+    encoder: label
+IsVirtual:
+    column: IsVirtual
+    encoder: label
+Recency:
+    column: Recency 
+    encoder: label
+Frequency:
+    column: Frequency
+    encoder: label
+Monetary:
+    column: Monetary
+    encoder: label
+Duration:
+    column: Duration
+    encoder: label
+
+CountryRegion:
+    column: CountryRegion
+    encoder: ohe
+    drop: null
+CountrySubregion:
+    column: CountrySubregion
+    encoder: ohe
+    drop: null
+PlatformType:
+    column: PlatformType
+    encoder: ohe
+    bins: null
+Region:
+    column: Region
+    encoder: ohe
+    drop: null
+Segment:
+    column: Segment
+    encoder: ohe
+    drop: null
+StoreGroup:
+    column: StoreGroup
+    encoder: ohe
+    drop: null
+UnifiedPriceType:
+    column: UnifiedPriceType
+    encoder: ohe
+    drop: null
+OrderDayOhe:
+    column: OrderDay
+    encoder: ohe
+    drop: null
+OrderWeekDayOhe:
+    column: OrderWeekDay
+    encoder: ohe
+    drop: null
+OrderMonthOhe:
+    column: OrderMonth
+    encoder: ohe
+    drop: null
+
+Brand:
+    column: Brand
+    encoder: hash
+    bins: 7
+CategoryId:
+    column: CategoryId
+    encoder: hash
+    bins: 4
+#ClientCode:
+#    column: ClientCode
+#    encoder: hash
+#    bins: 17
+ManagerId:
+    column: ManagerId
+    encoder: hash
+    bins: 6
+Product:
+    column: Product
+    encoder: hash
+    bins: 10
+OrderCountry:
+    column: OrderCountry
+    encoder: hash
+    bins: 8
+Pratform:
+    column: Pratform
+    encoder: hash
+    bins: 5
+RFMD:
+    column: RFMD
+    encoder: hash
+    bins: 7
+# State:
+#     column: State
+#     encoder: hash
+#     bins: 9
+OrderYearDayEnc:
+    column: OrderYearDay
+    encoder: hash
+    bins: 9
+OrderWeekEnc:
+    column: OrderWeek
+    encoder: hash
+    bins: 6
+OrderYearDay:
+    column: OrderYearDay
+    encoder: time
+    kwargs:
+        min: 1
+        max: 365
+OrderWeekDay:
+    column: OrderWeekDay
+    encoder: time
+    kwargs:
+        min: 0
+        max: 7
+OrderHour:
+    column: OrderHour
+    encoder: time
+    kwargs:
+        min: 0
+        max: 24
+
+OrderWeekLabel:
+    column: OrderWeek
+    encoder: label
+OrderYearDayLabel:
+    column: OrderYearDay
+    encoder: label
+OrderWeekDayLabel:
+    column: OrderWeekDay
+    encoder: label
+OrderHourLabel:
+    column: OrderHour
+    encoder: label
+OrderDayLabel:
+    column: OrderDay
+    encoder: label
+OrderMonthLabel:
+    column: OrderMonth
+    encoder: label
+
+""")
