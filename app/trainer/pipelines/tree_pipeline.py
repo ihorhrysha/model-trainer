@@ -1,0 +1,23 @@
+import pandas as pd
+from sklearn.experimental import enable_hist_gradient_boosting
+from sklearn.ensemble import HistGradientBoostingRegressor
+
+from app.trainer.model_wrapper import LogModelWrapper
+from app.trainer.pipelines.abstract_pipeline import AbstractPipeline
+from app.trainer.utils import load_yaml
+
+
+class TreePipeline(AbstractPipeline):
+    ModelInputType = pd.DataFrame
+
+    def train_model(self, ds_train: ModelInputType):
+        model = LogModelWrapper(HistGradientBoostingRegressor(random_state=42))
+        y = ds_train.pop('UserDiscount')
+        X = ds_train
+        model.fit(X, y)
+        self.model = model
+
+    @property
+    def encoding_params(self):
+        return load_yaml(
+            'app/trainer/transformer/encoding_params/tree_encoding_params.yml')
