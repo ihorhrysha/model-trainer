@@ -1,9 +1,11 @@
+import os
 from datetime import datetime
 
+from flask import current_app
 from google.cloud import bigquery
 from google.oauth2 import service_account
-from flask import current_app
-from .main_query import query_string
+
+from .utils import read_sql_query
 
 
 class DataSource:
@@ -20,6 +22,7 @@ class DataSource:
         )
 
     def main_query(self):
+        query_string = read_sql_query('app/trainer/main_query.sql')
         return self.query(query_string)
 
     def query(self, select):
