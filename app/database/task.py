@@ -1,6 +1,12 @@
 from datetime import datetime
 
+from flask import current_app
+
 from app.database import db
+from .model import Model
+from app.rest.models.service import create_model
+import redis
+import rq
 
 
 class Task(db.Model):
@@ -11,22 +17,47 @@ class Task(db.Model):
     info = db.Column(db.Text)
     begin_date = db.Column(db.DateTime)
     finish_date = db.Column(db.DateTime)
+    job_id = db.Column(db.String(36))
 
     model = db.relationship(
         'Model', backref=db.backref('model', lazy='dynamic'))
 
     model_id = db.Column(db.Integer, db.ForeignKey('model.id'))
 
-    def __init__(self, name, info, status, model, begin_date=None, finish_date=None):
+    def __init__(self, name, info, status, job_id, begin_date=None, finish_date=None):
         self.name = name
         self.info = info
         self.status = status
-        self
+
         if begin_date is None:
             begin_date = datetime.utcnow()
         self.begin_date = begin_date
         self.finish_date = finish_date
-        self.model = model
+        self.job_id = job_id
 
     def __repr__(self):
-        return '<Task %r>' % self.title
+        return '<Task %r>' % self.name
+
+    def get_rq_job(self):
+        try:
+            rq_job = rq.job.Job.fetch(self.job_id, connection=current_app.redis)
+        except (redis.exceptions.RedisError, rq.exceptions.NoSuchJobError):
+            return None
+        return rq_job
+
+    def update_task_progress(self):
+        job = self.get_rq_job()
+        self.status = job.get_status()
+        self.finish_date = job.ended_at
+        if (job.result != None) and (self.status == "finished") and (job.meta['progress'] == 100):
+            create_model(job.result)
+            self.model_id = job.result
+        db.session.commit()
+
+
+    def get_task_progress(self):
+        self.update_task_progress()
+        job = self.get_rq_job()
+        return job.meta.get('progress', 0) if job is not None else 100
+
+
