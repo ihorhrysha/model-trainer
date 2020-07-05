@@ -2,8 +2,8 @@
 import logging
 import traceback
 
+from flask import Blueprint
 from flask_restplus import Api
-
 from flask import current_app
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -19,6 +19,9 @@ api = Api(version='1.0', title='Trainer API',
 api.add_namespace(models_namespace)
 api.add_namespace(tasks_namespace)
 
+bp = Blueprint('api', __name__)
+
+api.init_app(bp)
 
 @api.errorhandler
 def default_error_handler(e):

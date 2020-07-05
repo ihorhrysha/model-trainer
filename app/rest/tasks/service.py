@@ -1,27 +1,11 @@
-from app.trainer.trainer import LRTrainer, NNTrainer, TreeTrainer
 from flask import abort
 from flask import current_app
 from app.database.task import Task
-from app.database import db
+from app import db
 import redis
 
-def train_model(model_type: str = 'lr', **model_params) -> str:
-    if model_type == "lr":
-        trainer = LRTrainer(model_type)
-    elif model_type == "nn":
-        trainer = NNTrainer(model_type,
-                            **model_params.get('nn_settings', {}))
-    elif model_type == "hgbr":
-        trainer = TreeTrainer(model_type,
-                              **model_params.get('hgbr_settings', {}))
-    else:
-        trainer = None
-        abort(400)
-    model_id = trainer.run()
-    return model_id
-
 def create_task(func, name, info, **data):
-    rq_job = current_app.task_queue.enqueue(func, **data)
+    rq_job = current_app.task_queue.enqueue("app.jobs."+func, job_timeout=-1, **data)
     rq_job.meta['progress'] = 0
     task = Task( name=name, info=info,
                  status = rq_job.get_status(),
@@ -31,8 +15,7 @@ def create_task(func, name, info, **data):
     db.session.add(task)
     db.session.commit()
 
-#def get_tasks_in_progress():
-#    return Task.query.filter_by(Task.status=="started").all()
+    return rq_job.get_id()
 
 def get_task(id):
     task = Task.query.filter(Task.id==id).one()
@@ -48,7 +31,6 @@ def delete_task(id):
         db.session.commit()
     else:
         abort(500, "The redis job was not deleted")
-
 
 def get_all_tasks():
     for task in Task.query.all():

@@ -19,22 +19,22 @@ from app.trainer.data_source_service import DataSource, ModelSource
 from app.trainer.encoding_params import default_encoding_params
 from app.trainer.transformer import Transformer
 
-from app.database.task import Task
+# from app.database.task import Task
 from rq import get_current_job
-
-def set_task_progress(progress):
-    job = get_current_job()
-    if job:
-        job.meta['progress'] = progress
-        job.save_meta()
-        task = Task.query.filter_by(Task.job_id==job.get_id()).first()
-        task.update_task_progress()
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
+
+def set_task_progress(progress):
+    job = get_current_job()
+    # if job:
+    #     job.meta['progress'] = progress
+    #     job.save_meta()
+    #     task = Task.query.filter_by(Task.job_id==job.get_id()).first()
+    #     task.update_task_progress()
 
 
 def pickle(obj, filepath):

@@ -9,8 +9,6 @@ source venv/bin/activate
 
 make install
 
-export FLASK_APP=manage.py
-
 flask db upgrade
 ```
 
@@ -47,6 +45,12 @@ To see existing redis keys (queues, jobs, workers etc.) launch redis-cli
 ```bash
 redis-cli
 > keys "*"
+```
+
+### Install redis(docker alternative)
+
+```bash
+docker-compose up -d
 ```
 
 

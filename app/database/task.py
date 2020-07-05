@@ -1,8 +1,7 @@
 from datetime import datetime
-
 from flask import current_app
 
-from app.database import db
+from app import db
 from .model import Model
 from app.rest.models.service import create_model
 import redis

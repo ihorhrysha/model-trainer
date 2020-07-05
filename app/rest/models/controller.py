@@ -11,7 +11,7 @@ model_dto = ModelDto.model_item
 
 
 @api.route('/')
-class TaskCollection(Resource):
+class ModelCollection(Resource):
 
     @api.marshal_list_with(model_dto)
     def get(self):
@@ -20,17 +20,6 @@ class TaskCollection(Resource):
         """
 
         return get_all_models()
-
-    @api.expect(model_dto)
-    @api.response(201, 'Model successfully created.')
-    def post(self):
-        """
-        Creates a model !!!for testing purposes.
-        """
-        data = request.json
-        create_model(data)
-        return None, 201
-
 
 @api.route('/<int:id>')
 @api.response(404, 'Model not found.')

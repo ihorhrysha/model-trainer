@@ -1,0 +1,2 @@
+FLASK_APP=trainer.py
+FLASK_ENV=development

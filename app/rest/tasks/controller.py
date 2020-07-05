@@ -10,26 +10,25 @@ train_dto = TrainDto.train_item
 task_dto = TrainDto.task_item
 model_dto = ModelDto.model_item
 
-@api.route('/run')
-class TrainModel(Resource):
+@api.route('/model')
+class TaskModel(Resource):
 
-    # @api.response(201, 'Model successfully trained.')
     @api.expect(train_dto)
     @api.response(201, 'Model training successfully started.')
     def post(self):
         """
-        Start training
+        Start task for model training
         """
 
         model_params = request.json
-        create_task("app.rest.tasks.service.train_model",
+        job_id = create_task("train_model",
                     name = "Model training",
                     info = "{0} model training with params: {1}".format(model_params.get("model_type"), model_params),
                     **model_params)
-        #model_id = train_model(**model_params)
-        #create_model({"name": model_id})
-        return None, 201
+        return job_id, 201
 
+@api.route('/')
+class TaskCollection(Resource):
     @api.marshal_list_with(task_dto)
     def get(self):
         """
