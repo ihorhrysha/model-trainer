@@ -36,7 +36,17 @@ sudo nano /etc/redis/redis.conf
 #       They do not enable continuous liveness pings back to your supervisor.
 supervised systemd
 ...
+
 ```
+
+### Install redis(docker alternative)
+
+```bash
+docker-compose up -d
+```
+
+### Run worker
+
 From the root of the project start a worker:
 ```bash
 rq worker training-tasks
@@ -45,12 +55,6 @@ To see existing redis keys (queues, jobs, workers etc.) launch redis-cli
 ```bash
 redis-cli
 > keys "*"
-```
-
-### Install redis(docker alternative)
-
-```bash
-docker-compose up -d
 ```
 
 

@@ -7,8 +7,8 @@ from flask_restplus import Api
 from flask import current_app
 from sqlalchemy.orm.exc import NoResultFound
 
-from .models.controller import api as models_namespace
-from .tasks.controller import api as tasks_namespace
+from app.rest.models.controller import api as models_namespace
+from app.rest.tasks.controller import api as tasks_namespace
 
 log = logging.getLogger(__name__)
 
@@ -22,6 +22,7 @@ api.add_namespace(tasks_namespace)
 bp = Blueprint('api', __name__)
 
 api.init_app(bp)
+
 
 @api.errorhandler
 def default_error_handler(e):

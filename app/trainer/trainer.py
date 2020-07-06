@@ -19,7 +19,7 @@ from app.trainer.data_source_service import DataSource, ModelSource
 from app.trainer.encoding_params import default_encoding_params
 from app.trainer.transformer import Transformer
 
-# from app.database.task import Task
+from app.models import Task
 from rq import get_current_job
 
 logger = logging.getLogger(__name__)
@@ -28,13 +28,14 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
+
 def set_task_progress(progress):
     job = get_current_job()
-    # if job:
-    #     job.meta['progress'] = progress
-    #     job.save_meta()
-    #     task = Task.query.filter_by(Task.job_id==job.get_id()).first()
-    #     task.update_task_progress()
+    if job:
+        job.meta['progress'] = progress
+        job.save_meta()
+        task = Task.query.filter(Task.job_id == job.get_id()).first()
+        task.update_task_progress()
 
 
 def pickle(obj, filepath):
@@ -134,13 +135,14 @@ def discount_metric(y, y_pred, ds_test):
     real_revenue = revenue_df.TotalOrderProductRevenue.sum()
 
     # special metric
-    predicted_income_product = predicted_revenue_df.TotalOrderProductRevenue - cost_df.TotalOrderProductCost
+    predicted_income_product = predicted_revenue_df.TotalOrderProductRevenue - \
+        cost_df.TotalOrderProductCost
     mses = (y - y_pred) ** 2
     mses = mses.reset_index(drop=True)
     loss_orders_ind = \
-    np.where(predicted_income_product.reset_index(drop=True) <= 0)[0]
+        np.where(predicted_income_product.reset_index(drop=True) <= 0)[0]
     profit_orders_ind = \
-    np.where(predicted_income_product.reset_index(drop=True) > 0)[0]
+        np.where(predicted_income_product.reset_index(drop=True) > 0)[0]
 
     mses1 = (mses[loss_orders_ind] * 10).to_list() + mses[
         profit_orders_ind].to_list()
@@ -158,7 +160,7 @@ class LogModelWrapper:
         self.y_tr = encoder(**encoder_params)
 
     def fit(self, X, y, **kwargs):
-        y = np.array(y).reshape((-1,1))
+        y = np.array(y).reshape((-1, 1))
         y = np.log1p(y)
         return self.model.fit(X, self.y_tr.fit_transform(y), **kwargs)
 
@@ -295,9 +297,9 @@ class AbstractTrainer(abc.ABC):
         metrics = {
             'mse': mean_squared_error(y_test, pred),
             'mae': mean_absolute_error(y_test, pred),
-            'discount_metric': None,  #disc_metric,
-            'true_revenue': None,  #true_revenue,
-            'pred_revenue': None,  #pred_revenue
+            'discount_metric': None,  # disc_metric,
+            'true_revenue': None,  # true_revenue,
+            'pred_revenue': None,  # pred_revenue
         }
         logger.info("MSE:              {:.6f}".format(metrics['mse']))
         logger.info("MAE:              {:.6f}".format(metrics['mae']))
