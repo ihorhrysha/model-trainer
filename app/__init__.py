@@ -26,7 +26,7 @@ def create_app(config_class=Config):
     # Frontend
     from app.front import bp as front_bp
     app.register_blueprint(front_bp)
-    
+
     # redis
     app.redis = Redis.from_url(app.config['REDIS_URL'])
     app.task_queue = rq.Queue('training-tasks', connection=app.redis)
