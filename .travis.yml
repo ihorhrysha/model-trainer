@@ -1,6 +1,6 @@
 language: python
 env:
-  - FLASK_APP=manage.py
+  - FLASK_APP=trainer.py
 install:
   - make install
   - flask db upgrade

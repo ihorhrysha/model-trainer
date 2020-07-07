@@ -82,3 +82,31 @@ class TrainDto():
         'nn_settings': fields.Nested(nn_settings_item),
         'hgbr_settings': fields.Nested(hgbr_settings_item),
     })
+
+    task_item = api.model('Task_item', {
+        'id': fields.Integer(
+            readOnly=True,
+            description='The task id'
+        ),
+        'name': fields.String(
+            example='Model training task',
+            description='The name of the task'
+        ),
+        'status': fields.String(
+            example='Started',
+            description='The status of the task'
+        ),
+        'job_id': fields.String(
+            description='The id of redis job'
+        ),
+        'info': fields.String(
+            description='The information about the task'
+        ),
+        'begin_date': fields.DateTime(
+            description='The date of starting the task'
+        ),
+        'finish_date': fields.DateTime(
+            description='The date of starting the task'
+        ),
+
+    })

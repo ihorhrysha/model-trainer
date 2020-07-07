@@ -1,12 +1,10 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, redirect
 
 
 # building the API
-routes = Blueprint('front', __name__, template_folder='templates')
+bp = Blueprint('front', __name__, template_folder='templates')
 
-
-@routes.route('/')
-@routes.route('/index')
+@bp.route('/')
+@bp.route('/index')
 def index():
-    user = {'username': 'Ihor'}
-    return render_template('index.html', title='Home', user=user)
+    return redirect('api')

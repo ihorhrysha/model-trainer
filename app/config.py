@@ -15,3 +15,4 @@ class Config(object):
     ENV = 'development'
     GOOGLE_APPLICATION_CREDENTIALS = os.environ.get('GBQ_CRED_PATH') or \
         os.path.join(basedir, 'bigquery.cred.json')
+    REDIS_URL = os.environ.get('REDIS_URL') or 'redis://'

@@ -6,8 +6,10 @@ from typing import Dict, Union
 
 import numpy as np
 import pandas as pd
+from rq import get_current_job
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
+from app.models import Task
 from app.trainer.data_preprocessor import DataPreprocessor
 from app.trainer.data_source_service import DataSource, ModelSource
 from app.trainer.transformer import Transformer
@@ -18,6 +20,15 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
+
+
+def set_task_progress(progress):
+    job = get_current_job()
+    if job:
+        job.meta['progress'] = progress
+        job.save_meta()
+        task = Task.query.filter(Task.job_id == job.get_id()).first()
+        task.update_task_progress()
 
 
 class AbstractPipeline(abc.ABC):
@@ -34,19 +45,22 @@ class AbstractPipeline(abc.ABC):
 
     def run(self):
         logger.info('Loading dataset...')
-        dataset = self.load_dataset()
+        # dataset = self.load_dataset()
         # with open('/home/andrii/.config/JetBrains/PyCharm2020.1/scratches/python-proj/df.pkl', 'rb') as f:
         #     dataset = pkl.load(f)
+        set_task_progress(10)
         logger.info('Dataset loaded.')
 
         logger.info('Preprocessing dataset...')
-        dataset = self.preprocess_dataset(dataset)
-        # with open('/home/andrii/.config/JetBrains/PyCharm2020.1/scratches/python-proj/df_preprocessed.pkl', 'rb') as f:
-        #     dataset = pkl.load(f)
+        # dataset = self.preprocess_dataset(dataset)
+        with open('/home/andrii/.config/JetBrains/PyCharm2020.1/scratches/python-proj/df_preprocessed.pkl', 'rb') as f:
+            dataset = pkl.load(f).sample(frac=.1, random_state=42)
+        set_task_progress(30)
         logger.info('Dataset preprocessed.')
 
         logger.info('Splitting dataset...')
         ds_train, ds_test = self.split_dataset(dataset)
+        set_task_progress(40)
         logger.info('Dataset splitted.')
         del dataset
 
@@ -57,6 +71,7 @@ class AbstractPipeline(abc.ABC):
         #     (ds_test, ds_train_transformed, ds_test_transformed),
         #     '/home/andrii/.config/JetBrains/PyCharm2020.1/scratches/python-proj/ds_train_test_transformed.pkl'
         # )
+        set_task_progress(60)
         logger.info('Features transformed.')
         del ds_train
 
@@ -66,17 +81,20 @@ class AbstractPipeline(abc.ABC):
 
         logger.info('Training model...')
         self.train_model(ds_train_transformed)
+        set_task_progress(80)
         logger.info('Model trained.')
         del ds_train_transformed
 
         logger.info('Validating model...')
         self.test_model(ds_test, ds_test_transformed)
+        set_task_progress(90)
         logger.info('Model validated.')
         del ds_test, ds_test_transformed
 
         logger.info('Saving model...')
         # self.load_model(None)
         model_id = self.save_model()
+        set_task_progress(100)
         logger.info(f'Model saved with model_id={model_id}.')
         return self.model_id
 
@@ -143,9 +161,9 @@ class AbstractPipeline(abc.ABC):
         metrics = {
             'mse': mean_squared_error(y_test, pred),
             'mae': mean_absolute_error(y_test, pred),
-            'discount_metric': None,  #disc_metric,
-            'true_revenue': None,  #true_revenue,
-            'pred_revenue': None,  #pred_revenue
+            'discount_metric': None,  # disc_metric,
+            'true_revenue': None,  # true_revenue,
+            'pred_revenue': None,  # pred_revenue
         }
         logger.info("MSE:              {:.6f}".format(metrics['mse']))
         logger.info("MAE:              {:.6f}".format(metrics['mae']))

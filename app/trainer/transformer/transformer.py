@@ -82,8 +82,12 @@ class Transformer:
         """
         return_type: str, one of {'dict', 'df'}
         """
-        res = Parallel(n_jobs=os.cpu_count() - 1)(
-            delayed(self._transform_column)(df, params, mode='transform')
+        # res = Parallel(n_jobs=os.cpu_count() - 1)(
+        #     delayed(self._transform_column)(df, params, mode='transform')
+        #     for params in tqdm(self.features.values(), desc='transform')
+        # )
+        res = tuple(
+            self._transform_column(df, params, mode='transform')
             for params in tqdm(self.features.values(), desc='transform')
         )
         res = {name: value for name, value in zip(self.features.keys(), res)}
