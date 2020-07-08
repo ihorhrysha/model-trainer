@@ -11,7 +11,11 @@ class TreePipeline(AbstractPipeline):
     ModelInputType = pd.DataFrame
 
     def train_model(self, ds_train: ModelInputType):
-        model = LogModelWrapper(HistGradientBoostingRegressor(random_state=42))
+        base_model = HistGradientBoostingRegressor(
+            random_state=42,
+            **self.model_params
+        )
+        model = LogModelWrapper(base_model)
         y = ds_train.pop('UserDiscount')
         X = ds_train
         model.fit(X, y)

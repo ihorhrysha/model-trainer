@@ -31,6 +31,11 @@ class NNPipeline(AbstractPipeline):
         y = ds_train.pop('UserDiscount')
         X = ds_train
 
+        n_hidden = (
+            self.model_params.get('n_dense1', 16),
+            self.model_params.get('n_dense2', 8),
+        )
+
         tf.random.set_seed(42)
         inputs_num = [
             keras.Input(
@@ -42,22 +47,16 @@ class NNPipeline(AbstractPipeline):
         x = keras.layers.concatenate(inputs_num, axis=-1, name='input')
         activation = 'relu'  # worked better than 'elu'
 
-        x = keras.layers.Dense(
-            16,
-            activation=activation,
-            name='dense_1',
-            kernel_initializer=keras.initializers.RandomUniform(seed=42)
-            # works better than 'RandomNorm' and 'glorot'
-        )(x)
-        # x = tfkl.BatchNormalization()(x) # works worse
-        x = keras.layers.Dense(
-            8,
-            activation=activation,
-            name='dense_2',
-            kernel_initializer=keras.initializers.RandomUniform(seed=42)
-            # works better than 'RandomNorm' and 'glorot'
-        )(x)
-        # x = tfkl.BatchNormalization()(x) # works worse
+        for layer in range(2):
+            x = keras.layers.Dense(
+                n_hidden[layer],
+                activation=activation,
+                name=f'dense_{layer}',
+                kernel_initializer=keras.initializers.RandomUniform(seed=42)
+                # works better than 'RandomNorm' and 'glorot'
+            )(x)
+            # x = tfkl.BatchNormalization()(x) # works worse
+
         x_out = keras.layers.Dense(1, name='dense_out', use_bias=False)(x)
 
         # model.summary()

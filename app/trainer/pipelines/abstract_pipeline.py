@@ -45,16 +45,16 @@ class AbstractPipeline(abc.ABC):
 
     def run(self):
         logger.info('Loading dataset...')
-        # dataset = self.load_dataset()
+        dataset = self.load_dataset()
         # with open('/home/andrii/.config/JetBrains/PyCharm2020.1/scratches/python-proj/df.pkl', 'rb') as f:
         #     dataset = pkl.load(f)
         set_task_progress(10)
         logger.info('Dataset loaded.')
 
         logger.info('Preprocessing dataset...')
-        # dataset = self.preprocess_dataset(dataset)
-        with open('/home/andrii/.config/JetBrains/PyCharm2020.1/scratches/python-proj/df_preprocessed.pkl', 'rb') as f:
-            dataset = pkl.load(f).sample(frac=.1, random_state=42)
+        dataset = self.preprocess_dataset(dataset)
+        # with open('/home/andrii/.config/JetBrains/PyCharm2020.1/scratches/python-proj/df_preprocessed.pkl', 'rb') as f:
+        #     dataset = pkl.load(f).sample(frac=.1, random_state=42)
         set_task_progress(30)
         logger.info('Dataset preprocessed.')
 
