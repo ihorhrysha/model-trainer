@@ -4,7 +4,9 @@ import numpy as np
 import pandas as pd
 import pycountry
 from countryinfo import CountryInfo
-from joblib import delayed, Parallel
+from joblib import Parallel, delayed
+
+from app.trainer.metrics import order_price_feature
 
 
 class DataPreprocessor:
@@ -231,22 +233,7 @@ class DataPreprocessor:
     def _order_price_feature(df):
         """ Create TotalOrderPrice feature (total BasePrice of items in order)
         """
-        df = df.copy()
-        df.eval('TotalOrderProductPrice = BasePrice * OrderQty', inplace=True)
-
-        right_df = df[['OrderId', 'TotalOrderProductPrice']].\
-            groupby('OrderId').\
-            sum().\
-            reset_index().\
-            rename(columns={'TotalOrderProductPrice': 'TotalOrderPrice'})
-
-        if 'TotalOrderPrice' in df.columns:
-            df.drop(columns='TotalOrderPrice', inplace=True)
-        return df.merge(
-            right_df,
-            how='left',
-            on='OrderId'
-        )
+        return order_price_feature(df)
 
     @staticmethod
     def _order_revenue_feature(df):

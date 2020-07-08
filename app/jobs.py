@@ -1,6 +1,6 @@
 from app import create_app
 from flask import abort
-from app.trainer.trainer import LRTrainer, NNTrainer, TreeTrainer
+from app.trainer import LRPipeline, NNPipeline, TreePipeline
 
 app = create_app()
 app.app_context().push()
@@ -8,12 +8,12 @@ app.app_context().push()
 
 def train_model(model_type: str = 'lr', **model_params) -> str:
     if model_type == "lr":
-        trainer = LRTrainer(model_type)
+        trainer = LRPipeline(model_type)
     elif model_type == "nn":
-        trainer = NNTrainer(model_type,
+        trainer = NNPipeline(model_type,
                             **model_params.get('nn_settings', {}))
     elif model_type == "hgbr":
-        trainer = TreeTrainer(model_type,
+        trainer = TreePipeline(model_type,
                               **model_params.get('hgbr_settings', {}))
     else:
         trainer = None
