@@ -10,7 +10,7 @@ from trainer_app.trainer.metrics import order_price_feature
 
 
 class DataPreprocessor:
-    def preprocess(self, df):
+    def preprocess(self, df, inference=False):
         # Feature construction
 
         print('Shape before Feature construction:', df.shape)
@@ -24,25 +24,25 @@ class DataPreprocessor:
         # Feature preparation
 
         print('Shape before Feature preparation:', df.shape)
-
         df = self._status_preparation(df)
         df = self._segment_preparation(df)
         df = self._platform_preparation(df)
 
-        # filters & droppers ))
-        print('Before filters:', df.shape)
+        if not inference:
+            # filters & droppers ))
+            print('Before filters:', df.shape)
 
-        df = self._filter_orders_w_products_wo_price(df)
-        df = self._filter_orders_wo_price(df)
-        df = self._filter_orders_range(df, 'BasePrice', (0.3, 1.5))
-        df = self._filter_orders_range(df, 'UserPrice', (0.3, 1.5))
-        df = self._drop_orders_w_negative_values(df, 'BaseDiscount')
-        df = self._drop_orders_w_negative_values(df, 'UserDiscount')
+            df = self._filter_orders_w_products_wo_price(df)
+            df = self._filter_orders_wo_price(df)
+            df = self._filter_orders_range(df, 'BasePrice', (0.3, 1.5))
+            df = self._filter_orders_range(df, 'UserPrice', (0.3, 1.5))
+            df = self._drop_orders_w_negative_values(df, 'BaseDiscount')
+            df = self._drop_orders_w_negative_values(df, 'UserDiscount')
 
-        # cleaning nan's
-        df = self._drop_orders_nan_values(df, 'BaseDiscount')
-        df = self._drop_orders_nan_values(df, 'UserDiscount')
-        df = self._nan_cleaner(df, threshold=0.7)
+            # cleaning nan's
+            df = self._drop_orders_nan_values(df, 'BaseDiscount')
+            df = self._drop_orders_nan_values(df, 'UserDiscount')
+            df = self._nan_cleaner(df, threshold=0.7)
 
         return df
 
