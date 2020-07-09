@@ -1,6 +1,6 @@
-from app import create_app
+from trainer_app import create_app
 from flask import abort
-from app.trainer import LRPipeline, NNPipeline, TreePipeline
+from trainer_app.trainer import LRPipeline, NNPipeline, TreePipeline
 
 app = create_app()
 app.app_context().push()

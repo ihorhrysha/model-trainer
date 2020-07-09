@@ -2,9 +2,9 @@ import pandas as pd
 from sklearn.experimental import enable_hist_gradient_boosting
 from sklearn.ensemble import HistGradientBoostingRegressor
 
-from app.trainer.model_wrapper import LogModelWrapper
-from app.trainer.pipelines.abstract_pipeline import AbstractPipeline
-from app.trainer.utils import load_yaml
+from trainer_app.trainer.model_wrapper import LogModelWrapper
+from trainer_app.trainer.pipelines.abstract_pipeline import AbstractPipeline
+from trainer_app.trainer.utils import load_yaml
 
 
 class TreePipeline(AbstractPipeline):
@@ -24,4 +24,6 @@ class TreePipeline(AbstractPipeline):
     @property
     def encoding_params(self):
         return load_yaml(
-            'app/trainer/transformer/encoding_params/tree_encoding_params.yml')
+            'trainer_app/trainer/transformer/encoding_params/'
+            'tree_encoding_params.yml'
+        )

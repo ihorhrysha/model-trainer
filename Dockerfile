@@ -9,7 +9,7 @@ RUN pip install -r requirements.txt
 # Copy source code
 COPY manage.py manage.py
 COPY migrations migrations
-COPY app app
+COPY trainer_app trainer_app
 
 EXPOSE 5000 
 ENTRYPOINT [ "python" ] 

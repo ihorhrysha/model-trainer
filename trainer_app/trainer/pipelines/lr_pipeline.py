@@ -1,8 +1,8 @@
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 
-from app.trainer.model_wrapper import LogModelWrapper
-from app.trainer.pipelines.abstract_pipeline import AbstractPipeline
+from trainer_app.trainer.model_wrapper import LogModelWrapper
+from trainer_app.trainer.pipelines.abstract_pipeline import AbstractPipeline
 
 
 class LRPipeline(AbstractPipeline):

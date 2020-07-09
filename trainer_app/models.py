@@ -3,7 +3,7 @@ import redis
 from flask import current_app
 from datetime import datetime
 
-from app import db
+from trainer_app import db
 
 # TODO Do we need local nodel storage
 

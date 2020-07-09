@@ -4,7 +4,7 @@ import pandas as pd
 from joblib import Parallel, delayed
 from tqdm import tqdm
 
-from app.trainer.transformer.encoders import (
+from trainer_app.trainer.transformer.encoders import (
     FeatureHasher,
     LabelEncoder,
     NoTransform,

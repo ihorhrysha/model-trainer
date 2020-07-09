@@ -1,5 +1,5 @@
 from flask import Flask
-from app.config import Config
+from trainer_app.config import Config
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
@@ -20,11 +20,11 @@ def create_app(config_class=Config):
     migrate.init_app(app, db=db)
 
     # Separate API module
-    from app.rest import bp as api_bp
+    from trainer_app.rest import bp as api_bp
     app.register_blueprint(api_bp, url_prefix='/api')
 
     # Frontend
-    from app.front import bp as front_bp
+    from trainer_app.front import bp as front_bp
     app.register_blueprint(front_bp)
 
     # redis

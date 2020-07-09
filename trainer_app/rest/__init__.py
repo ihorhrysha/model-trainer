@@ -7,8 +7,8 @@ from flask_restplus import Api
 from flask import current_app
 from sqlalchemy.orm.exc import NoResultFound
 
-from app.rest.models.controller import api as models_namespace
-from app.rest.tasks.controller import api as tasks_namespace
+from trainer_app.rest.models.controller import api as models_namespace
+from trainer_app.rest.tasks.controller import api as tasks_namespace
 
 log = logging.getLogger(__name__)
 
