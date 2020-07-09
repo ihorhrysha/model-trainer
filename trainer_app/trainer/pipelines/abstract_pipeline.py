@@ -238,12 +238,14 @@ class AbstractPipeline(abc.ABC):
             transformer=None,
             metrics=None
     ):
+        model = self.from_bytes(model)
+        transformer = self.from_bytes(transformer)
         self.from_artifacts(
             model_id=model_id,
             model_type=model_type,
             model_params=model_params,
-            model=pkl.loads(model) if model else None,
-            transformer=pkl.loads(transformer) if transformer else None,
+            model=model,
+            transformer=transformer,
             metrics=metrics
         )
 
@@ -253,3 +255,11 @@ class AbstractPipeline(abc.ABC):
             'trainer_app/trainer/transformer/encoding_params/'
             'base_encoding_params.yml'
         )
+
+    @staticmethod
+    def from_bytes(serialized: Union[None, str, bytes]) -> object:
+        if serialized:
+            if isinstance(serialized, str):
+                serialized = eval(serialized)
+            return pkl.loads(serialized)
+        return None
