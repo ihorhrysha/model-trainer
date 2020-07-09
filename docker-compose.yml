@@ -13,7 +13,7 @@ services:
       - ALLOW_EMPTY_PASSWORD=yes
     networks:
       - model-trainer-tier
-  # model-trainer-app:
+  # model-trainer-trainer_app:
   #   build: ./
   #   ports:
   #     - 80:5000

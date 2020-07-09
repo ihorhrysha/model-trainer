@@ -21,7 +21,7 @@ class DataSource:
         )
 
     def main_query(self):
-        query_string = read_sql_query('app/trainer/main_query.sql')
+        query_string = read_sql_query('trainer_app/trainer/main_query.sql')
         return self.query(query_string)
 
     def query(self, select):

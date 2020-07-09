@@ -9,11 +9,11 @@ import pandas as pd
 from rq import get_current_job
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
-from app.models import Task
-from app.trainer.data_preprocessor import DataPreprocessor
-from app.trainer.data_source_service import DataSource, ModelSource
-from app.trainer.transformer import Transformer
-from app.trainer.utils import load_yaml, unpickle
+from trainer_app.models import Task
+from trainer_app.trainer.data_preprocessor import DataPreprocessor
+from trainer_app.trainer.data_source_service import DataSource, ModelSource
+from trainer_app.trainer.transformer import Transformer
+from trainer_app.trainer.utils import load_yaml, unpickle
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -250,4 +250,6 @@ class AbstractPipeline(abc.ABC):
     @property
     def encoding_params(self):
         return load_yaml(
-            'app/trainer/transformer/encoding_params/base_encoding_params.yml')
+            'trainer_app/trainer/transformer/encoding_params/'
+            'base_encoding_params.yml'
+        )

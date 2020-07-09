@@ -1,8 +1,8 @@
 from flask import request
 from flask_restplus import Resource, Namespace
-from app.rest.models.service import create_model
+from trainer_app.rest.models.service import create_model
 from .dto import TrainDto
-from app.rest.models.dto import ModelDto
+from trainer_app.rest.models.dto import ModelDto
 from .service import create_task, get_all_tasks, get_task, delete_task
 
 api = TrainDto.api

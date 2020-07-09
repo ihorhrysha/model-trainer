@@ -6,7 +6,7 @@ import pycountry
 from countryinfo import CountryInfo
 from joblib import Parallel, delayed
 
-from app.trainer.metrics import order_price_feature
+from trainer_app.trainer.metrics import order_price_feature
 
 
 class DataPreprocessor:

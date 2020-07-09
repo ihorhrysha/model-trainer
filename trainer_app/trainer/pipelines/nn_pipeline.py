@@ -7,9 +7,9 @@ import pickle as pkl
 import tensorflow as tf
 from tensorflow import keras
 
-from app.trainer.model_wrapper import LogModelWrapper
-from app.trainer.pipelines.abstract_pipeline import AbstractPipeline
-from app.trainer.transformer import Transformer
+from trainer_app.trainer.model_wrapper import LogModelWrapper
+from trainer_app.trainer.pipelines.abstract_pipeline import AbstractPipeline
+from trainer_app.trainer.transformer import Transformer
 
 
 class NNPipeline(AbstractPipeline):
