@@ -23,7 +23,7 @@ def train_model(model_type: str = 'lr', **model_params) -> str:
                               **model_params.get('hgbr_settings', {}))
     else:
         trainer = None
-        abort(400)
+        abort(400, "{} model type is not possible. Possible parameters are: 'lr', 'nn', 'hdbr'".format(model_type))
     model_id = trainer.run()
 
     job = get_current_job()

@@ -16,3 +16,10 @@ class Config(object):
     GOOGLE_APPLICATION_CREDENTIALS = os.environ.get('GBQ_CRED_PATH') or \
         os.path.join(basedir, 'bigquery.cred.json')
     REDIS_URL = os.environ.get('REDIS_URL') or 'redis://'
+
+class TestConfig(Config):
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
+        'sqlite:///' + os.path.join(basedir, 'test.db')
+    SQLALCHEMY_DATABASE_PATH = os.environ.get('DATABASE_URL') or \
+                              os.path.join(basedir, 'test.db')
+    ENV = 'test'

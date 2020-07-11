@@ -14,6 +14,7 @@ model_dto = ModelDto.model_item
 class TaskModel(Resource):
 
     @api.expect(train_dto)
+    @api.marshal_with(task_dto)
     @api.response(201, 'Model training successfully started.')
     def post(self):
         """
@@ -21,11 +22,11 @@ class TaskModel(Resource):
         """
 
         model_params = request.json
-        job_id = create_task("train_model",
+        task = create_task("train_model",
                     name = "Model training",
                     info = "{0} model training with params: {1}".format(model_params.get("model_type"), model_params),
                     **model_params)
-        return job_id, 201
+        return task, 201
 
 @api.route('/')
 class TaskCollection(Resource):
@@ -56,7 +57,7 @@ class TrainModel(Resource):
         delete_task(id)
         return None, 204
 
-@api.route('/progress/<int:id>')
+@api.route('/info/<int:id>')
 @api.response(404, 'Task not found.')
 class TrainModel(Resource):
 

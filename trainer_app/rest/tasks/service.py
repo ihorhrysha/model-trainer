@@ -17,7 +17,7 @@ def create_task(func, name, info, **data):
     db.session.add(task)
     db.session.commit()
 
-    return rq_job.get_id()
+    return task
 
 
 def get_task(id):
