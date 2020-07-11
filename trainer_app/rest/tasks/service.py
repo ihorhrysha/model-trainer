@@ -1,13 +1,13 @@
 from flask import abort
 from flask import current_app
-from app.models import Task
-from app import db
+from trainer_app.models import Task
+from trainer_app import db
 import redis
 
 
 def create_task(func, name, info, **data):
     rq_job = current_app.task_queue.enqueue(
-        "app.jobs."+func, job_timeout=-1, **data)
+        "trainer_app.jobs."+func, job_timeout=-1, **data)
     rq_job.meta['progress'] = 0
     task = Task(name=name, info=info,
                 status=rq_job.get_status(),
