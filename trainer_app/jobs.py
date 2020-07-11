@@ -3,9 +3,9 @@ from flask import abort
 from trainer_app.trainer import LRPipeline, NNPipeline, TreePipeline
 
 from rq import get_current_job
-from app.models import Task
-from app.rest.models.service import create_model
-from app import db
+from trainer_app.models import Task
+from trainer_app.rest.models.service import create_model
+from trainer_app import db
 
 
 app = create_app()
