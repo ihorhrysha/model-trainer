@@ -55,3 +55,13 @@ class TrainModel(Resource):
         """
         delete_task(id)
         return None, 204
+
+@api.route('/progress/<int:id>')
+@api.response(404, 'Task not found.')
+class TrainModel(Resource):
+
+    def get(self, id):
+        """
+        Returns a progress of the task
+        """
+        return get_task(id).get_task_progress()

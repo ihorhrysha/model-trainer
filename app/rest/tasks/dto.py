@@ -108,5 +108,8 @@ class TrainDto():
         'finish_date': fields.DateTime(
             description='The date of starting the task'
         ),
+        'model_id': fields.String(
+            description='The id of created model if if was created'
+        ),
 
     })

@@ -61,11 +61,6 @@ class Task(db.Model):
 
         if (job is not None):
 
-            if (job.result is not None) and (self.status == "finished") and (job.meta['progress'] == 100):
-                model = Model(job.result.name)
-                db.session.add(model)
-                self.model_id = job.result
-
             self.status = job.get_status()
             self.finish_date = job.ended_at
             db.session.commit()

@@ -29,13 +29,16 @@ def get_task(id):
 def delete_task(id):
     task = Task.query.filter(Task.id == id).one()
     r = redis.StrictRedis()
-    response = r.delete("rq:job:" + task.job_id)
-    if response == 1:
+    if task.get_rq_job() != None:
+        response = r.delete("rq:job:" + task.job_id)
+        if response == 1:
+            db.session.delete(task)
+            db.session.commit()
+        else:
+            abort(500, "The redis job was not deleted")
+    else:
         db.session.delete(task)
         db.session.commit()
-    else:
-        abort(500, "The redis job was not deleted")
-
 
 def get_all_tasks():
     for task in Task.query.all():

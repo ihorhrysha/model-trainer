@@ -2,6 +2,12 @@ from app import create_app
 from flask import abort
 from app.trainer.trainer import LRTrainer, NNTrainer, TreeTrainer
 
+from rq import get_current_job
+from app.models import Task
+from app.rest.models.service import create_model
+from app import db
+
+
 app = create_app()
 app.app_context().push()
 
@@ -19,4 +25,14 @@ def train_model(model_type: str = 'lr', **model_params) -> str:
         trainer = None
         abort(400)
     model_id = trainer.run()
+
+    job = get_current_job()
+    if job:
+        task = Task.query.filter(Task.job_id == job.get_id()).first()
+        task.update_task_progress()
+        if (job.meta['progress'] == 100):
+            create_model({"name" :model_id})
+            task.model_id = model_id
+            db.session.commit()
+
     return model_id
