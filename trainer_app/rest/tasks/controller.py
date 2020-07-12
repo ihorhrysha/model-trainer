@@ -12,6 +12,7 @@ task_dto = TrainDto.task_item
 class TaskTrain(Resource):
 
     @api.expect(train_dto)
+    @api.marshal_with(task_dto)
     @api.response(201, 'Model training successfully started.')
     def post(self):
         """
@@ -19,12 +20,11 @@ class TaskTrain(Resource):
         """
 
         model_params = request.json
-        job_id = create_task("train_model",
-                             name="Model training",
-                             info="{0} model training with params: {1}".format(
-                                 model_params.get("model_type"), model_params),
-                             **model_params)
-        return job_id, 201
+        task = create_task("train_model",
+                    name = "Model training",
+                    info = "{0} model training with params: {1}".format(model_params.get("model_type"), model_params),
+                    **model_params)
+        return task, 201
 
 
 @api.route('/')
@@ -56,8 +56,7 @@ class TaskItem(Resource):
         delete_task(job_id)
         return None, 204
 
-
-@api.route('/progress/<string:job_id>')
+@api.route('/info/<string:job_id>')
 @api.response(404, 'Task not found.')
 class TaskProgress(Resource):
 

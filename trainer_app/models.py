@@ -68,4 +68,8 @@ class Task(db.Model):
     def get_task_progress(self):
         self.update_task_progress()
         job = self.get_rq_job()
-        return job.meta.get('progress', 0) if job is not None else 100
+        progress = job.meta.get('progress', 0) if job is not None else 100
+        info = job.__dict__["exc_info"] if job is not None else ''
+        return {"status": self.status,
+                "progress": progress,
+                "exec_info": info}

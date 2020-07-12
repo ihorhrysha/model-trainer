@@ -58,36 +58,16 @@ class TrainDto():
         ),
     })
 
-    nn_settings_item = api.model('Task_settings_nn', {
-        "n_dense1": fields.Integer(
-            readOnly=True,
-            default=16,
-            example=16,
-            description='Number of neurons in first dense layer.'
-        ),
-        "n_dense2": fields.Integer(
-            readOnly=True,
-            default=8,
-            example=16,
-            description='Number of neurons in second dense layer.'
-        )
-    })
-
     train_item = api.model('Task', {
         'model_type': fields.String(
             required=True,
             example='lr',
             description='One from model types: lr, nn, hgbr.'
         ),
-        'nn_settings': fields.Nested(nn_settings_item),
         'hgbr_settings': fields.Nested(hgbr_settings_item),
     })
 
     task_item = api.model('Task_item', {
-        # 'id': fields.Integer(
-        #     readOnly=True,
-        #     description='The task id'
-        # ),
         'job_id': fields.String(
             description='The id of redis job'
         ),
