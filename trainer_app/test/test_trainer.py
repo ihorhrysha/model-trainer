@@ -26,26 +26,26 @@ class TestTrainer(unittest.TestCase):
         self.assertEqual(response.data, b'[]\n')
 
 
-    def test_task_creation(self):
-        response = self.client.post('/api/tasks/train', data = json.dumps({"model_type": "elastic net",
-                                                                  "hgbr_settings": {
-                                                                    "loss": "least_squares",
-                                                                    "max_iter": 100,
-                                                                    "learning_rate": 1,
-                                                                    "max_leaf_nodes": 31,
-                                                                    "max_depth": 10000,
-                                                                    "min_samples_leaf": 20,
-                                                                    "l2_regularization": 0,
-                                                                    "max_bins": 255
-                                                                  }
-                                                                }), follow_redirects = True,
-                                                                    content_type='application/json')
-        time.sleep(5)
-        self.assertNotEqual(Task.query.all(), [])
-        task = Task.query.first()
-        task.update_task_progress()
-        self.assertEqual(task.job_id, response.json.get("job_id"))
-        self.assertEqual(task.status, 'failed')
+    #def test_task_creation(self):
+    #    response = self.client.post('/api/tasks/train', data = json.dumps({"model_type": "elastic net",
+    #                                                              "hgbr_settings": {
+    #                                                                "loss": "least_squares",
+    #                                                                "max_iter": 100,
+    #                                                                "learning_rate": 1,
+    #                                                                "max_leaf_nodes": 31,
+    #                                                                "max_depth": 10000,
+    #                                                                "min_samples_leaf": 20,
+    #                                                                "l2_regularization": 0,
+    #                                                                "max_bins": 255
+    #                                                              }
+    #                                                            }), follow_redirects = True,
+    #                                                                content_type='application/json')
+    #    time.sleep(5)
+    #    self.assertNotEqual(Task.query.all(), [])
+    #    task = Task.query.first()
+    #    task.update_task_progress()
+    #    self.assertEqual(task.job_id, response.json.get("job_id"))
+    #    self.assertEqual(task.status, 'failed')
 
 
 if __name__ == '__main__':
