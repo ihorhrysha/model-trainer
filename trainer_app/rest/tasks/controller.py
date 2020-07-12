@@ -1,17 +1,15 @@
 from flask import request
 from flask_restplus import Resource, Namespace
-from trainer_app.rest.models.service import create_model
 from .dto import TrainDto
-from trainer_app.rest.models.dto import ModelDto
 from .service import create_task, get_all_tasks, get_task, delete_task
 
 api = TrainDto.api
 train_dto = TrainDto.train_item
 task_dto = TrainDto.task_item
-model_dto = ModelDto.model_item
 
-@api.route('/model')
-class TaskModel(Resource):
+
+@api.route('/train')
+class TaskTrain(Resource):
 
     @api.expect(train_dto)
     @api.response(201, 'Model training successfully started.')
@@ -22,10 +20,12 @@ class TaskModel(Resource):
 
         model_params = request.json
         job_id = create_task("train_model",
-                    name = "Model training",
-                    info = "{0} model training with params: {1}".format(model_params.get("model_type"), model_params),
-                    **model_params)
+                             name="Model training",
+                             info="{0} model training with params: {1}".format(
+                                 model_params.get("model_type"), model_params),
+                             **model_params)
         return job_id, 201
+
 
 @api.route('/')
 class TaskCollection(Resource):
@@ -37,31 +37,32 @@ class TaskCollection(Resource):
         return get_all_tasks()
 
 
-@api.route('/<int:id>')
+@api.route('/<string:job_id>')
 @api.response(404, 'Task not found.')
-class TrainModel(Resource):
+class TaskItem(Resource):
 
     @api.marshal_with(task_dto)
-    def get(self, id):
+    def get(self, job_id):
         """
         Returns a task
         """
-        return get_task(id)
+        return get_task(job_id)
 
     @api.response(204, 'Model successfully deleted.')
-    def delete(self, id):
+    def delete(self, job_id):
         """
         Deletes a task.
         """
-        delete_task(id)
+        delete_task(job_id)
         return None, 204
 
-@api.route('/progress/<int:id>')
-@api.response(404, 'Task not found.')
-class TrainModel(Resource):
 
-    def get(self, id):
+@api.route('/progress/<string:job_id>')
+@api.response(404, 'Task not found.')
+class TaskProgress(Resource):
+
+    def get(self, job_id):
         """
         Returns a progress of the task
         """
-        return get_task(id).get_task_progress()
+        return get_task(job_id).get_task_progress()

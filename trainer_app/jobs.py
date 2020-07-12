@@ -4,7 +4,6 @@ from trainer_app.trainer import LRPipeline, NNPipeline, TreePipeline
 
 from rq import get_current_job
 from trainer_app.models import Task
-from trainer_app.rest.models.service import create_model
 from trainer_app import db
 
 
@@ -17,10 +16,10 @@ def train_model(model_type: str = 'lr', **model_params) -> str:
         trainer = LRPipeline(model_type)
     elif model_type == "nn":
         trainer = NNPipeline(model_type,
-                            **model_params.get('nn_settings', {}))
+                             **model_params.get('nn_settings', {}))
     elif model_type == "hgbr":
         trainer = TreePipeline(model_type,
-                              **model_params.get('hgbr_settings', {}))
+                               **model_params.get('hgbr_settings', {}))
     else:
         trainer = None
         abort(400)
@@ -31,7 +30,6 @@ def train_model(model_type: str = 'lr', **model_params) -> str:
         task = Task.query.filter(Task.job_id == job.get_id()).first()
         task.update_task_progress()
         if (job.meta['progress'] == 100):
-            create_model({"name" :model_id})
             task.model_id = model_id
             db.session.commit()
 

@@ -20,25 +20,31 @@ def create_task(func, name, info, **data):
     return rq_job.get_id()
 
 
-def get_task(id):
-    task = Task.query.filter(Task.id == id).one()
+def get_task(job_id):
+    task = Task.query.filter(Task.job_id == job_id).first()
+    if task is None:
+        abort(404, "Task {} has not been found".format(job_id))
+
     task.update_task_progress()
     return task
 
 
-def delete_task(id):
-    task = Task.query.filter(Task.id == id).one()
+def delete_task(job_id):
+    task = Task.query.filter(Task.job_id == job_id).first()
+
+    # Redis job
+    if task is None:
+        abort(404, "Task {} has not been found".format(job_id))
+
     r = redis.StrictRedis()
-    if task.get_rq_job() != None:
-        response = r.delete("rq:job:" + task.job_id)
-        if response == 1:
-            db.session.delete(task)
-            db.session.commit()
-        else:
-            abort(500, "The redis job was not deleted")
-    else:
-        db.session.delete(task)
-        db.session.commit()
+    response = r.delete("rq:job:" + task.job_id)
+
+    # DB Task
+    db.session.delete(task)
+    db.session.commit()
+
+    return job_id
+
 
 def get_all_tasks():
     for task in Task.query.all():

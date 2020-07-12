@@ -17,7 +17,7 @@ class DataPreprocessor:
 
         df = self._finance_features(df)
         df = self._construct_RFMD(df)
-        df = self._location_features(df, if_print=False)
+        df = self._location_features(df, if_print=False, in_parallel=not inference)
         df = self._time_features(df)
         df = self._order_price_feature(df)
 
@@ -162,7 +162,7 @@ class DataPreprocessor:
         return df
 
     @staticmethod
-    def _location_features(price_data, if_print=True):
+    def _location_features(price_data, if_print=True, in_parallel=False):
         '''
         Function to construct two location features: region and subregion
 
@@ -185,22 +185,35 @@ class DataPreprocessor:
                     return (country, "")
 
         unknown = []
-        regions = Parallel(n_jobs=-1)(
-            delayed(partial(set_info, info="region"))(x)
-            for x in price_data["OrderCountry"].unique()
-        )
-        print(f"Total {len(unknown)} country regions were not found")
-        print("Total rows of unknown region in the data: ",
-              price_data[price_data.OrderCountry.isin(unknown)].shape[0])
-        unknown = []
-        subregions = Parallel(n_jobs=-1)(
-            delayed(partial(set_info, info="subregion"))(x)
-            for x in price_data["OrderCountry"].unique()
-        )
-        print(f"Total {len(unknown)} country subregions were not found")
-        print("Total rows of unknown subregions in the data: ",
-              price_data[price_data.OrderCountry.isin(unknown)].shape[0])
+        if in_parallel:
+            regions = Parallel(n_jobs=-1)(
+                delayed(partial(set_info, info="region"))(x)
+                for x in price_data["OrderCountry"].unique()
+            )
+        else:
+            regions = [set_info(x, "region") for x in price_data["OrderCountry"].unique()]
 
+        if if_print:
+            print(f"Total {len(unknown)} country regions were not found")
+            print("Total rows of unknown region in the data: ",
+                price_data[price_data.OrderCountry.isin(unknown)].shape[0])
+        
+        unknown = []
+        if in_parallel:
+            subregions = Parallel(n_jobs=-1)(
+                delayed(partial(set_info, info="subregion"))(x)
+                for x in price_data["OrderCountry"].unique()
+            )
+        else:
+            subregions = [set_info(x, "subregion") for x in price_data["OrderCountry"].unique()]
+
+        if if_print:
+            print(f"Total {len(unknown)} country subregions were not found")
+            print("Total rows of unknown subregions in the data: ",
+                price_data[price_data.OrderCountry.isin(unknown)].shape[0])
+
+        
+        
         df = price_data.merge(
             pd.DataFrame(regions,
                          columns=["OrderCountry", "CountryRegion"]),
