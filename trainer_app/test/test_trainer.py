@@ -22,15 +22,12 @@ class TestTrainer(unittest.TestCase):
         pass
 
     def test_empty_db(self):
-        response = self.client.get('/api/models', follow_redirects = True)
-        self.assertEqual(response.data, b'[]\n')
-
         response = self.client.get('/api/tasks', follow_redirects = True)
         self.assertEqual(response.data, b'[]\n')
 
 
     def test_task_creation(self):
-        response = self.client.post('/api/tasks/model', data = json.dumps({"model_type": "elastic net",
+        response = self.client.post('/api/tasks/train', data = json.dumps({"model_type": "elastic net",
                                                                   "hgbr_settings": {
                                                                     "loss": "least_squares",
                                                                     "max_iter": 100,
@@ -43,11 +40,11 @@ class TestTrainer(unittest.TestCase):
                                                                   }
                                                                 }), follow_redirects = True,
                                                                     content_type='application/json')
-        time.sleep(10)
+        time.sleep(5)
         self.assertNotEqual(Task.query.all(), [])
-        self.assertEqual(Task.query.first().id, response.json.get("id"))
         task = Task.query.first()
         task.update_task_progress()
+        self.assertEqual(task.job_id, response.json.get("job_id"))
         self.assertEqual(task.status, 'failed')
 
 
